@@ -15,6 +15,7 @@ function App() {
   const [pdfUrl, setPdfUrl] = useState(null)
   const [jsonData, setJsonData] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [showExtractedText, setShowExtractedText] = useState(false)
   const [pdfTextContent, setPdfTextContent] = useState([])
   const [highlightedText, setHighlightedText] = useState('')
 
@@ -37,7 +38,6 @@ function App() {
           items: textContentItem.items
         })
       }
-      
       setPdfTextContent(textContent)
       return textContent
     } catch (error) {
@@ -52,28 +52,64 @@ function App() {
       setHighlightedText('')
       return
     }
-    
+
     // Clean the search text (remove extra spaces, etc.)
     const cleanSearchText = searchText.trim()
     if (!cleanSearchText) {
       setHighlightedText('')
       return
     }
-    
+
     setHighlightedText(cleanSearchText)
-    
-    // Find the page containing the text
+
+    // Find the page containing the text - try multiple search strategies
     for (const page of pdfTextContent) {
+      // Try exact match first
       if (page.text.toLowerCase().includes(cleanSearchText.toLowerCase())) {
-        // Could scroll to page here if needed
-        toast.success(`Found "${cleanSearchText}" in PDF`)
+        scrollToPage(page.pageNumber)
+        toast.success(`Found "${cleanSearchText}" on page ${page.pageNumber}`)
         return
       }
+
+      // Try searching individual words (longer than 3 chars)
+      const searchWords = cleanSearchText.split(/\s+/).filter(word => word.length > 3)
+      const foundWords = searchWords.filter(word =>
+        page.text.toLowerCase().includes(word.toLowerCase())
+      )
+
+      if (foundWords.length > 0) {
+        scrollToPage(page.pageNumber)
+        toast.success(`Found "${cleanSearchText}" on page ${page.pageNumber}`)
+        return
+      }
+
+      // Try partial matches for numbers and short terms
+      if (cleanSearchText.length <= 10) {
+        const cleanLower = cleanSearchText.toLowerCase()
+        const pageLower = page.text.toLowerCase()
+        let matchCount = 0
+        for (let i = 0; i < cleanSearchText.length; i++) {
+          if (pageLower.includes(cleanLower[i])) matchCount++
+        }
+        if (matchCount > cleanSearchText.length * 0.7) { // 70% character match
+          scrollToPage(page.pageNumber)
+          toast.success(`Found "${cleanSearchText}" on page ${page.pageNumber} (partial)`)
+          return
+        }
+      }
     }
-    
+
     // If text not found, clear highlight and show message
     setHighlightedText('')
     toast.info(`"${cleanSearchText}" not found in PDF`)
+  }
+
+  // Function to scroll to a specific page
+  const scrollToPage = (pageNumber) => {
+    const pageElement = document.querySelector(`[data-page-number="${pageNumber}"]`)
+    if (pageElement) {
+      pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
   }
 
   useEffect(() => {
@@ -312,12 +348,23 @@ function App() {
           {selectedFile && <div className="selected-file">{selectedFile.type === 'application/pdf' ? 'PDF' : 'JSON'}: {selectedFile.name}</div>}
           {selectedFile && selectedFile.type === 'application/pdf' && <button onClick={handleProcessPdf}>Process PDF</button>}
           {selectedFile && selectedFile.type === 'application/pdf' && <button onClick={handleViewPdf}>View PDF</button>}
+          {selectedFile && selectedFile.type === 'application/pdf' && pdfTextContent.length > 0 && (
+            <button onClick={() => setShowExtractedText(!showExtractedText)}>
+              {showExtractedText ? 'Hide' : 'Show'} Extracted Text
+            </button>
+          )}
           {selectedFile && selectedFile.type === 'application/pdf' && !!(processedData[selectedFile.id]) && <button onClick={handleViewResult}>View Result</button>}
         </div>
         <div className="content">
           <div className="split-panel">
             <div className="panel-left">
-              {pdfUrl && <FileViewer pdfUrl={pdfUrl} highlightedText={highlightedText} />}
+              {pdfUrl && <FileViewer 
+                pdfUrl={pdfUrl} 
+                highlightedText={highlightedText}
+                onTextSelect={(selectedText) => {
+                  setHighlightedText(selectedText)
+                }}
+              />}
             </div>
             <div className="panel-right">
               {jsonData && typeof jsonData === 'object' ? (
@@ -329,6 +376,17 @@ function App() {
               ) : null}
             </div>
           </div>
+          {showExtractedText && pdfTextContent.length > 0 && (
+            <div className="extracted-text-panel">
+              <h3>Extracted PDF Text (for debugging)</h3>
+              {pdfTextContent.map(page => (
+                <div key={page.pageNumber} className="page-text">
+                  <h4>Page {page.pageNumber}</h4>
+                  <pre className="text-content">{page.text}</pre>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -54,7 +54,12 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
     if (Array.isArray(value)) {
       return (
         <div key={id} className="array-field">
-          <label className="field-label">{key} ({value.length} items):</label>
+          <label 
+            className="field-label clickable-label"
+            onClick={() => onFieldClick && onFieldClick(String(key))}
+          >
+            {key} ({value.length} items):
+          </label>
           <div className="array-items">
             {value.map((item, index) => (
               <div key={index} className="array-item">
@@ -90,7 +95,12 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
     } else if (typeof value === 'object' && value !== null) {
       return (
         <div key={id} className="object-field">
-          <label className="field-label">{key}:</label>
+          <label 
+            className="field-label clickable-label"
+            onClick={() => onFieldClick && onFieldClick(String(key))}
+          >
+            {key}:
+          </label>
           <div className="nested-object">
             {Object.entries(value).map(([objKey, objValue]) =>
               renderField(objKey, objValue, currentPath)
@@ -105,7 +115,13 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
 
       return (
         <div key={id} className="field">
-          <label htmlFor={id} className="field-label">{key}:</label>
+          <label 
+            htmlFor={id} 
+            className="field-label clickable-label"
+            onClick={() => onFieldClick && onFieldClick(String(key))}
+          >
+            {key}:
+          </label>
           {inputType === 'checkbox' ? (
             <input
               id={id}
