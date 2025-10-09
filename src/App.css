@@ -1,0 +1,655 @@
+.app {
+  display: flex;
+  height: 100vh;
+  background-color: #000;
+  color: #fff;
+}
+
+.sidebar {
+  width: 300px;
+  background-color: #111;
+  padding: 20px;
+  overflow-y: auto;
+  transition: width 0.3s ease, transform 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+  padding: 20px 10px;
+  overflow: hidden;
+}
+
+.sidebar-content {
+  width: 100%;
+}
+
+.sidebar-toggle {
+  display: flex;
+  justify-content: flex-end;
+  padding: 10px 10px 4px 10px;
+  border-bottom: 1px solid #333;
+}
+
+.sidebar-toggle-btn {
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-toggle-btn:hover {
+  background-color: #444;
+}
+
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left 0.3s ease;
+}
+
+.main-panel.sidebar-collapsed {
+  margin-left: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  margin-bottom: 20px;
+  margin-top: 12px;
+  gap: 8px;
+}
+
+.sidebar-header input {
+  flex: 1;
+  padding: 8px;
+  background-color: #222;
+  border: 1px solid #333;
+  color: #fff;
+}
+
+.sidebar-header button {
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+  padding: 8px;
+  cursor: pointer;
+}
+
+.sidebar-header button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+}
+
+.folders-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.folder {
+  margin-bottom: 10px;
+}
+
+.folder-header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px;
+  background-color: #222;
+  border-radius: 4px;
+}
+
+.folder-header span {
+  margin-left: 8px;
+  flex: 1;
+}
+
+.folder-header button {
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.files-list {
+  margin-left: 20px;
+  margin-top: 10px;
+}
+
+.file {
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  cursor: pointer;
+  background-color: #333;
+  margin-bottom: 4px;
+  border-radius: 4px;
+}
+
+.file span {
+  margin-left: 8px;
+  flex: 1;
+}
+
+.file.selected {
+  background-color: #007bff;
+  color: #fff;
+}
+
+.upload-area {
+  padding: 20px;
+  border: 2px dashed #555;
+  text-align: center;
+  color: #aaa;
+  cursor: pointer;
+}
+
+.main-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.controls {
+  padding: 10px;
+  background-color: #111;
+  border-bottom: 1px solid #333;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.selected-file {
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #007bff;
+}
+
+.controls button {
+  margin-right: 10px;
+  padding: 8px 16px;
+  background-color: #007bff;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.split-panel {
+  display: flex;
+  height: 100%;
+}
+
+.panel-left, .panel-right {
+  flex: 1;
+  overflow: hidden;
+  border-right: 1px solid #333;
+}
+
+.panel-right {
+  border-right: none;
+}
+
+/* File Viewer Styles */
+.file-viewer {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.file-viewer .react-pdf__Document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.file-viewer .react-pdf__Page {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.panel-right {
+  border-right: none;
+}
+
+/* File Viewer Styles */
+.file-viewer {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.file-viewer .react-pdf__Document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.file-viewer .react-pdf__Page {
+  margin-bottom: 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.no-file {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  color: #666;
+  font-size: 18px;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 250px;
+  }
+  
+  .split-panel {
+    flex-direction: column;
+  }
+  
+  .panel-left, .panel-right {
+    flex: none;
+    height: 50%;
+    border-right: none;
+    border-bottom: 1px solid #333;
+  }
+  
+  .panel-right {
+    border-bottom: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 200px;
+    border-bottom: 1px solid #333;
+  }
+  
+  .main-panel {
+    height: calc(100vh - 200px);
+  }
+  
+  .sidebar-header {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .sidebar-header input {
+    width: 100%;
+  }
+  
+  .folders-list {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 10px;
+  }
+  
+  .folder {
+    min-width: 200px;
+    margin-right: 10px;
+  }
+  
+  .files-list {
+    margin-left: 10px;
+  }
+  
+  .controls {
+    padding: 8px;
+  }
+  
+  .controls button {
+    margin-right: 8px;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    font-size: 14px;
+  }
+  
+  .selected-file {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .file-viewer {
+    padding: 10px;
+  }
+  
+  .json-form {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 10px;
+  }
+  
+  .folder-header {
+    padding: 6px;
+    font-size: 14px;
+  }
+  
+  .file {
+    padding: 6px;
+    font-size: 14px;
+  }
+  
+  .upload-area {
+    padding: 15px;
+    font-size: 14px;
+  }
+  
+  .controls {
+    padding: 6px;
+  }
+  
+  .controls button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  
+  .split-panel {
+    height: 100%;
+  }
+  
+  .panel-left, .panel-right {
+    height: 50vh;
+  }
+  
+  .file-viewer .react-pdf__Page {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Responsive form styles */
+@media (max-width: 768px) {
+  .field {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .field label {
+    width: 100%;
+    margin-bottom: 4px;
+    margin-right: 0;
+  }
+  
+  .field input {
+    width: 100%;
+  }
+  
+  .form-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .form-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .stats-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .stats-info span {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .json-form h3 {
+    font-size: 16px;
+  }
+  
+  .field label {
+    font-size: 14px;
+  }
+  
+  .field input {
+    font-size: 14px;
+    padding: 6px;
+  }
+  
+  .export-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+.json-form h3 {
+  margin-top: 0;
+}
+
+.json-form textarea {
+  width: 100%;
+  height: 100%;
+  background-color: #222;
+  border: 1px solid #333;
+  color: #fff;
+  padding: 10px;
+  font-family: monospace;
+  resize: none;
+}
+
+.json-array {
+  overflow-y: auto;
+  height: 100%;
+}
+
+.json-item {
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #222;
+  border-radius: 4px;
+}
+
+.json-item h4 {
+  margin-top: 0;
+}
+
+.field {
+  display: flex;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.field label {
+  width: 200px;
+  margin-right: 10px;
+}
+
+.field input {
+  flex: 1;
+  padding: 4px;
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+}
+
+.object-field {
+  margin-bottom: 10px;
+}
+
+.nested {
+  margin-left: 20px;
+}
+
+/* New form styles */
+.json-form {
+  padding: 20px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+  padding-bottom: 10px;
+}
+
+.form-header h3 {
+  margin: 0;
+  color: #fff;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.export-btn {
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.export-btn:hover {
+  background-color: #218838;
+}
+
+.form-stats {
+  color: #ccc;
+  font-size: 14px;
+}
+
+.stats-info {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.stats-info span {
+  background-color: #333;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #555;
+}
+
+.stats-info span:nth-child(1) {
+  background-color: #007bff;
+  color: white;
+}
+
+.stats-info span:nth-child(2) {
+  background-color: #dc3545;
+  color: white;
+}
+
+.stats-info span:nth-child(3) {
+  background-color: #28a745;
+  color: white;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.field-label {
+  font-weight: bold;
+  color: #ccc;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.field input {
+  width: 100%;
+  padding: 8px;
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+  border-radius: 4px;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.field input[type="checkbox"] {
+  width: auto;
+  margin-right: 8px;
+}
+
+.field input[type="number"] {
+  max-width: 200px;
+}
+
+.object-field {
+  border: 1px solid #444;
+  padding: 15px;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+}
+
+.nested-object {
+  margin-top: 10px;
+  padding-left: 10px;
+  border-left: 2px solid #555;
+}
+
+.array-field {
+  border: 1px solid #444;
+  padding: 15px;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+}
+
+.array-items {
+  margin-top: 10px;
+}
+
+.array-item {
+  border: 1px solid #333;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  background-color: #222;
+}
+
+.array-item h5 {
+  margin: 0 0 10px 0;
+  color: #007bff;
+  font-size: 14px;
+}
+
+.array-item .field {
+  margin-bottom: 8px;
+}
+
+.array-item .field:last-child {
+  margin-bottom: 0;
+}
