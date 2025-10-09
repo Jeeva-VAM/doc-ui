@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight, FolderIcon, FileIcon, Plus, Trash2, Upload, Menu, X } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { useDropzone } from 'react-dropzone'
 import { fileDB } from '../utils/db'
 
 const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse }) => {
   const [newFolderName, setNewFolderName] = useState('')
+  const [dragOverFolder, setDragOverFolder] = useState(null)
 
   const createFolder = () => {
     if (!newFolderName.trim()) return
@@ -36,6 +38,22 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
     }
   }
 
+  const createDropzoneConfig = (folderId) => ({
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/json': ['.json']
+    },
+    multiple: true,
+    onDrop: (acceptedFiles) => {
+      onDrop(acceptedFiles, folderId)
+      setDragOverFolder(null)
+    },
+    onDragOver: () => setDragOverFolder(folderId),
+    onDragLeave: () => setDragOverFolder(null),
+    noClick: false,
+    noKeyboard: true
+  })
+
   const onDrop = async (acceptedFiles, folderId) => {
     const newFiles = []
     for (const file of acceptedFiles) {
@@ -57,6 +75,26 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
       setFolders(folders.map(f => f.id === folderId ? { ...f, files: [...f.files, ...newFiles] } : f))
       toast.success(`${newFiles.length} file(s) uploaded`)
     }
+  }
+
+  const DropzoneArea = ({ folderId }) => {
+    const { getRootProps, getInputProps, isDragActive } = useDropzone(createDropzoneConfig(folderId))
+
+    return (
+      <div
+        {...getRootProps()}
+        className={`upload-area ${isDragActive ? 'drag-active' : ''} ${dragOverFolder === folderId ? 'drag-over' : ''}`}
+      >
+        <input {...getInputProps()} />
+        <Upload size={16} />
+        <span>
+          {isDragActive
+            ? 'Drop files here...'
+            : 'Drag & drop PDFs/JSONs or click to upload'
+          }
+        </span>
+      </div>
+    )
   }
 
   return (
@@ -100,24 +138,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                         <button onClick={(e) => { e.stopPropagation(); deleteFile(folder.id, file.id) }}><Trash2 size={16} /></button>
                       </div>
                     ))}
-                    <div className="upload-area">
-                      <input
-                        type="file"
-                        multiple
-                        accept=".pdf,.json"
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || [])
-                          onDrop(files, folder.id)
-                          e.target.value = ''
-                        }}
-                        style={{ display: 'none' }}
-                        id={`upload-${folder.id}`}
-                      />
-                      <label htmlFor={`upload-${folder.id}`} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                        <Upload size={16} />
-                        <span>Click to upload PDFs/JSONs</span>
-                      </label>
-                    </div>
+                    <DropzoneArea folderId={folder.id} />
                   </div>
                 )}
               </div>

@@ -147,6 +147,24 @@
   text-align: center;
   color: #aaa;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+  border-color: #777;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.upload-area.drag-active {
+  border-color: #007bff;
+  background-color: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+
+.upload-area.drag-over {
+  border-color: #28a745;
+  background-color: rgba(40, 167, 69, 0.1);
+  color: #28a745;
 }
 
 .main-panel {
