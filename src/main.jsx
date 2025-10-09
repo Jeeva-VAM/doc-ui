@@ -4,8 +4,8 @@ import { pdfjs } from 'react-pdf'
 import './index.css'
 import App from './App.jsx'
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+// Configure PDF.js worker for react-pdf
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar'
 import FileViewer from './components/FileViewer'
 import JsonForm from './components/JsonForm'
 import { fileDB } from './utils/db'
+import { pdfjs } from 'react-pdf'
 import './App.css'
 
 function App() {
@@ -22,9 +23,8 @@ function App() {
   // Extract text from PDF
   const extractTextFromPdf = async (blob) => {
     try {
-      const { getDocument } = await import('pdfjs-dist')
       const arrayBuffer = await blob.arrayBuffer()
-      const pdf = await getDocument({ data: arrayBuffer }).promise
+      const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise
       
       const textContent = []
       
@@ -67,7 +67,6 @@ function App() {
       // Try exact match first
       if (page.text.toLowerCase().includes(cleanSearchText.toLowerCase())) {
         scrollToPage(page.pageNumber)
-        toast.success(`Found "${cleanSearchText}" on page ${page.pageNumber}`)
         return
       }
 
@@ -79,7 +78,6 @@ function App() {
 
       if (foundWords.length > 0) {
         scrollToPage(page.pageNumber)
-        toast.success(`Found "${cleanSearchText}" on page ${page.pageNumber}`)
         return
       }
 
@@ -93,20 +91,28 @@ function App() {
         }
         if (matchCount > cleanSearchText.length * 0.7) { // 70% character match
           scrollToPage(page.pageNumber)
-          toast.success(`Found "${cleanSearchText}" on page ${page.pageNumber} (partial)`)
           return
         }
       }
     }
 
-    // If text not found, clear highlight and show message
+    // If text not found, clear highlight
     setHighlightedText('')
-    toast.info(`"${cleanSearchText}" not found in PDF`)
   }
 
   // Function to scroll to a specific page
   const scrollToPage = (pageNumber) => {
-    const pageElement = document.querySelector(`[data-page-number="${pageNumber}"]`)
+    // Try multiple selectors to find the page element
+    let pageElement = document.querySelector(`[data-page-number="${pageNumber}"]`)
+    
+    if (!pageElement) {
+      // Fallback: find by react-pdf page structure
+      const pages = document.querySelectorAll('.react-pdf__Page')
+      if (pages.length >= pageNumber) {
+        pageElement = pages[pageNumber - 1]
+      }
+    }
+    
     if (pageElement) {
       pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
@@ -160,8 +166,6 @@ function App() {
         
         // Extract text from PDF for search functionality
         await extractTextFromPdf(blob)
-        
-        toast.success('PDF loaded successfully')
       } else {
         console.error('Blob not found for file ID:', file.id)
         toast.error('PDF file not found')
