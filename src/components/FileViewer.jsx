@@ -1,9 +1,14 @@
 import { Document, Page } from 'react-pdf'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import toast from 'react-hot-toast'
 
 const FileViewer = ({ pdfUrl }) => {
   const [numPages, setNumPages] = useState(null)
+
+  const documentOptions = useMemo(() => ({
+    disableWorker: true,
+    verbosity: 0
+  }), [])
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages)
@@ -21,10 +26,7 @@ const FileViewer = ({ pdfUrl }) => {
           file={pdfUrl}
           onLoadSuccess={onDocumentLoadSuccess}
           onLoadError={onDocumentLoadError}
-          options={{
-            disableWorker: true,
-            verbosity: 0
-          }}
+          options={documentOptions}
         >
           {Array.from(new Array(numPages), (_, index) => (
             <Page key={`page_${index + 1}`} pageNumber={index + 1} />
