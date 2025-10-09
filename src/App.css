@@ -238,6 +238,32 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
+.pdf-page-container {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.page-error {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  background-color: #222;
+  color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* Text highlighting styles */
+.react-pdf__Page__textContent mark {
+  background-color: #ffff00 !important;
+  color: #000 !important;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-weight: bold;
+}
+
 .panel-right {
   border-right: none;
 }
@@ -610,6 +636,7 @@
   border: 1px solid #555;
   color: #fff;
   border-radius: 4px;
+  cursor: pointer;
 }
 
 .field input:focus {

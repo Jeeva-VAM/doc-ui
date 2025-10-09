@@ -15,6 +15,66 @@ function App() {
   const [pdfUrl, setPdfUrl] = useState(null)
   const [jsonData, setJsonData] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [pdfTextContent, setPdfTextContent] = useState([])
+  const [highlightedText, setHighlightedText] = useState('')
+
+  // Extract text from PDF
+  const extractTextFromPdf = async (blob) => {
+    try {
+      const { getDocument } = await import('pdfjs-dist')
+      const arrayBuffer = await blob.arrayBuffer()
+      const pdf = await getDocument({ data: arrayBuffer }).promise
+      
+      const textContent = []
+      
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum)
+        const textContentItem = await page.getTextContent()
+        const pageText = textContentItem.items.map(item => item.str).join(' ')
+        textContent.push({
+          pageNumber: pageNum,
+          text: pageText,
+          items: textContentItem.items
+        })
+      }
+      
+      setPdfTextContent(textContent)
+      return textContent
+    } catch (error) {
+      console.error('Error extracting text from PDF:', error)
+      return []
+    }
+  }
+
+  // Function to highlight text in PDF
+  const highlightTextInPdf = (searchText) => {
+    if (!searchText || !pdfTextContent.length) {
+      setHighlightedText('')
+      return
+    }
+    
+    // Clean the search text (remove extra spaces, etc.)
+    const cleanSearchText = searchText.trim()
+    if (!cleanSearchText) {
+      setHighlightedText('')
+      return
+    }
+    
+    setHighlightedText(cleanSearchText)
+    
+    // Find the page containing the text
+    for (const page of pdfTextContent) {
+      if (page.text.toLowerCase().includes(cleanSearchText.toLowerCase())) {
+        // Could scroll to page here if needed
+        toast.success(`Found "${cleanSearchText}" in PDF`)
+        return
+      }
+    }
+    
+    // If text not found, clear highlight and show message
+    setHighlightedText('')
+    toast.info(`"${cleanSearchText}" not found in PDF`)
+  }
 
   useEffect(() => {
     const initDB = async () => {
@@ -61,6 +121,10 @@ function App() {
         const newUrl = URL.createObjectURL(blob)
         console.log('Created new URL:', newUrl)
         setPdfUrl(newUrl)
+        
+        // Extract text from PDF for search functionality
+        await extractTextFromPdf(blob)
+        
         toast.success('PDF loaded successfully')
       } else {
         console.error('Blob not found for file ID:', file.id)
@@ -253,13 +317,14 @@ function App() {
         <div className="content">
           <div className="split-panel">
             <div className="panel-left">
-              {pdfUrl && <FileViewer pdfUrl={pdfUrl} />}
+              {pdfUrl && <FileViewer pdfUrl={pdfUrl} highlightedText={highlightedText} />}
             </div>
             <div className="panel-right">
               {jsonData && typeof jsonData === 'object' ? (
                 <JsonForm
                   jsonData={jsonData}
                   setJsonData={(data) => setJsonData(data)}
+                  onFieldClick={highlightTextInPdf}
                 />
               ) : null}
             </div>

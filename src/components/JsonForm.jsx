@@ -1,7 +1,7 @@
 import React from 'react'
 import toast from 'react-hot-toast'
 
-const JsonForm = ({ jsonData, setJsonData }) => {
+const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
   const handleExportJson = () => {
     const dataStr = JSON.stringify(jsonData, null, 2)
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
@@ -78,6 +78,7 @@ const JsonForm = ({ jsonData, setJsonData }) => {
                         const newData = updateNestedValue(jsonData, [...currentPath, index.toString()], newValue)
                         setJsonData(newData)
                       }}
+                      onClick={() => onFieldClick && onFieldClick(String(item))}
                     />
                   </div>
                 )}
@@ -114,6 +115,7 @@ const JsonForm = ({ jsonData, setJsonData }) => {
                 const newData = updateNestedValue(jsonData, currentPath, e.target.checked)
                 setJsonData(newData)
               }}
+              onClick={() => onFieldClick && onFieldClick(String(value))}
             />
           ) : (
             <input
@@ -126,6 +128,7 @@ const JsonForm = ({ jsonData, setJsonData }) => {
                 const newData = updateNestedValue(jsonData, currentPath, newValue)
                 setJsonData(newData)
               }}
+              onClick={() => onFieldClick && onFieldClick(String(value))}
             />
           )}
         </div>
