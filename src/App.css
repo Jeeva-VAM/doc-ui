@@ -332,13 +332,21 @@
 }
 
 .pdf-text-layer > div {
-  color: transparent;
+  color: #000;
   position: absolute;
   white-space: pre;
   cursor: text;
   transform-origin: 0% 0%;
   user-select: text;
   pointer-events: auto;
+}
+
+.pdf-text-layer mark {
+  background-color: #ffff00 !important;
+  color: #000 !important;
+  padding: 1px 2px !important;
+  border-radius: 2px !important;
+  font-weight: bold !important;
 }
 
 .pdf-text-layer .markedContent {

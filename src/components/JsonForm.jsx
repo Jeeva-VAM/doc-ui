@@ -4,6 +4,11 @@ import * as XLSX from 'xlsx'
 
 const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
   const [viewMode, setViewMode] = useState('form') // 'form' or 'json'
+
+  // Helper function to check if a value is empty (should not trigger search)
+  const isEmptyValue = (value) => {
+    return value === null || value === undefined || value === ''
+  }
   const handleExportJson = () => {
     const dataStr = JSON.stringify(jsonData, null, 2)
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
@@ -82,6 +87,7 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
           <label 
             className="field-label clickable-label"
             onClick={() => onFieldClick && onFieldClick(String(key))}
+            title={`Click to search for "${key}" in PDF`}
           >
             {key} ({value.length} items):
           </label>
@@ -108,7 +114,7 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
                         const newData = updateNestedValue(jsonData, [...currentPath, index.toString()], newValue)
                         setJsonData(newData)
                       }}
-                      onClick={() => onFieldClick && onFieldClick(String(item))}
+                      onClick={() => !isEmptyValue(item) && onFieldClick && onFieldClick(String(item))}
                     />
                   </div>
                 )}
@@ -123,6 +129,7 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
           <label 
             className="field-label clickable-label"
             onClick={() => onFieldClick && onFieldClick(String(key))}
+            title={`Click to search for "${key}" in PDF`}
           >
             {key}:
           </label>
@@ -144,6 +151,7 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
             htmlFor={id} 
             className="field-label clickable-label"
             onClick={() => onFieldClick && onFieldClick(String(key))}
+            title={`Click to search for "${key}" in PDF`}
           >
             {key}:
           </label>
@@ -156,7 +164,7 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
                 const newData = updateNestedValue(jsonData, currentPath, e.target.checked)
                 setJsonData(newData)
               }}
-              onClick={() => onFieldClick && onFieldClick(String(value))}
+              onClick={() => onFieldClick && onFieldClick(String(key))}
             />
           ) : (
             <input
@@ -169,7 +177,7 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
                 const newData = updateNestedValue(jsonData, currentPath, newValue)
                 setJsonData(newData)
               }}
-              onClick={() => onFieldClick && onFieldClick(String(value))}
+              onClick={() => onFieldClick && onFieldClick(String(key))}
             />
           )}
         </div>

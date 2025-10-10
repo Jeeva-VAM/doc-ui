@@ -79,87 +79,102 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
     }
 
     const text = textItem.str
-    const searchText = highlightedText.toLowerCase().trim()
-    const textLower = text.toLowerCase()
+    const searchText = highlightedText.trim()
+    const textNormalized = text.toLowerCase()
+    const searchNormalized = searchText.toLowerCase()
 
-    // Debug logging
-    // console.log('Processing text item:', text, 'searching for:', searchText)
-
-    if (!textLower.includes(searchText)) {
-      return text
+    // Check if this text item contains any part of the search text
+    if (!textNormalized.includes(searchNormalized)) {
+      // Also check for individual words if it's a multi-word search
+      const searchWords = searchNormalized.split(/\s+/).filter(word => word.length > 2)
+      const hasMatchingWord = searchWords.some(word => textNormalized.includes(word))
+      if (!hasMatchingWord) {
+        return text
+      }
     }
 
-    // console.log('Found match in text item:', text)
+    // If we found a match, highlight the entire text item or the matching parts
+    if (textNormalized.includes(searchNormalized)) {
+      // Exact match - highlight the specific text
+      const parts = []
+      let lastIndex = 0
+      let index = textNormalized.indexOf(searchNormalized, lastIndex)
 
-    // Split text and highlight matches within this text item
-    const parts = []
-    let lastIndex = 0
-
-    // Find all occurrences of the search text in this text item
-    let index = textLower.indexOf(searchText, lastIndex)
-    while (index !== -1) {
-      // console.log('Match found at index:', index)
-      // Add text before the match
-      if (index > lastIndex) {
-        parts.push(text.slice(lastIndex, index))
+      while (index !== -1) {
+        // Add text before the match
+        if (index > lastIndex) {
+          parts.push(text.slice(lastIndex, index))
+        }
+        // Add highlighted match
+        const highlightedElement = (
+          <mark
+            key={`highlight-${index}`}
+            style={{
+              backgroundColor: '#ffff00',
+              color: '#000',
+              padding: '1px 2px',
+              borderRadius: '2px',
+              fontWeight: 'bold'
+            }}
+          >
+            {text.slice(index, index + searchText.length)}
+          </mark>
+        )
+        parts.push(highlightedElement)
+        lastIndex = index + searchText.length
+        index = textNormalized.indexOf(searchNormalized, lastIndex)
       }
-      // Add highlighted match
-      const highlightedElement = (
-        <span
-          key={`highlight-${index}`}
+
+      // Add remaining text
+      if (lastIndex < text.length) {
+        parts.push(text.slice(lastIndex))
+      }
+
+      return parts.length > 0 ? parts : text
+    } else {
+      // Partial match (word-based) - highlight the entire text item
+      return (
+        <mark
           style={{
-            backgroundColor: '#ffff00',
+            backgroundColor: '#ffff88',
             color: '#000',
-            padding: '2px 4px',
-            borderRadius: '2px',
-            fontWeight: 'bold',
-            boxShadow: '0 0 0 1px #ffaa00'
+            padding: '1px 2px',
+            borderRadius: '2px'
           }}
         >
-          {text.slice(index, index + highlightedText.length)}
-        </span>
+          {text}
+        </mark>
       )
-      parts.push(highlightedElement)
-      lastIndex = index + highlightedText.length
-      index = textLower.indexOf(searchText, lastIndex)
     }
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push(text.slice(lastIndex))
-    }
-
-    // console.log('Returning parts:', parts)
-    return parts.length > 0 ? parts : text
   }, [highlightedText])
 
-  // Handle text selection
-  useEffect(() => {
-    const handleSelection = () => {
-      const selection = window.getSelection()
-      if (selection && selection.toString().trim()) {
-        const selectedText = selection.toString().trim()
-        setSelectedText(selectedText)
-        if (onTextSelect) {
-          onTextSelect(selectedText)
-        }
-      }
-    }
+  // Handle text selection (disabled - only search on form field clicks)
+  // useEffect(() => {
+  //   const handleSelection = () => {
+  //     const selection = window.getSelection()
+  //     if (selection && selection.toString().trim()) {
+  //       const selectedText = selection.toString().trim()
+  //       setSelectedText(selectedText)
+  //       if (onTextSelect) {
+  //         onTextSelect(selectedText)
+  //       }
+  //     }
+  //   }
 
-    const handleClickOutside = (e) => {
-      if (fileViewerRef.current && !fileViewerRef.current.contains(e.target)) {
-        setSelectedText('')
-      }
-    }
+  //   const handleClickOutside = (e) => {
+  //     if (fileViewerRef.current && !fileViewerRef.current.contains(e.target)) {
+  //       setSelectedText('')
+  //     }
+  //   }
 
-    document.addEventListener('selectionchange', handleSelection)
-    document.addEventListener('click', handleClickOutside)
+  //   document.addEventListener('selectionchange', handleSelection)
+  //   document.addEventListener('click', handleClickOutside)
 
-    return () => {
-      document.removeEventListener('selectionchange', handleSelection)
-      document.removeEventListener('click', handleClickOutside)
-    }
-  }, [onTextSelect])
+  //   return () => {
+  //     document.removeEventListener('selectionchange', handleSelection)
+  //     document.removeEventListener('click', handleClickOutside)
+  //   }
+  // }, [onTextSelect])
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages)

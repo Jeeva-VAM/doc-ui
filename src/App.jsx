@@ -101,23 +101,59 @@ function App() {
     setHighlightedText('')
   }
 
-  // Function to scroll to a specific page
-  const scrollToPage = (pageNumber) => {
-    // Try multiple selectors to find the page element
-    let pageElement = document.querySelector(`[data-page-number="${pageNumber}"]`)
-    
-    if (!pageElement) {
-      // Fallback: find by react-pdf page structure
-      const pages = document.querySelectorAll('.react-pdf__Page')
-      if (pages.length >= pageNumber) {
-        pageElement = pages[pageNumber - 1]
-      }
-    }
-    
-    if (pageElement) {
-      pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  // Function to clear all stored data (for debugging/reset purposes)
+  const clearAllData = async () => {
+    try {
+      // Clear localStorage
+      localStorage.removeItem('folders')
+      localStorage.removeItem('sidebarWidth')
+
+      // Clear IndexedDB
+      await fileDB.clearAll()
+
+      // Reset state
+      setFolders([])
+      setSelectedFolder(null)
+      setSelectedFile(null)
+      setProcessedData({})
+      setPdfUrl(null)
+      setJsonData(null)
+      setPdfTextContent([])
+      setHighlightedText('')
+      setSidebarWidth(280)
+
+      toast.success('All data cleared successfully')
+    } catch (error) {
+      console.error('Error clearing data:', error)
+      toast.error('Error clearing data')
     }
   }
+
+  // Function to check storage status (for debugging)
+  const checkStorageStatus = async () => {
+    try {
+      const files = await fileDB.getAllFiles()
+      const jsonData = await fileDB.getAllJsonData()
+
+      console.log('Storage Status:')
+      console.log('Files in IndexedDB:', files.length)
+      files.forEach(file => console.log(`  - ${file.name} (${file.type})`))
+      console.log('JSON data in IndexedDB:', jsonData.length)
+      jsonData.forEach(entry => console.log(`  - ID: ${entry.id}`))
+      console.log('Folders in localStorage:', folders.length)
+      console.log('Processed data in memory:', Object.keys(processedData).length)
+
+      return { files: files.length, jsonData: jsonData.length, folders: folders.length }
+    } catch (error) {
+      console.error('Error checking storage status:', error)
+      return null
+    }
+  }
+
+  // Expose storage check to window for debugging
+  useEffect(() => {
+    window.checkStorageStatus = checkStorageStatus
+  }, [folders, processedData])
 
   useEffect(() => {
     const initDB = async () => {
@@ -131,25 +167,109 @@ function App() {
   }, [])
 
   useEffect(() => {
-    // Load folders from localStorage on app start
-    try {
-      const savedFolders = localStorage.getItem('folders')
-      if (savedFolders) {
-        setFolders(JSON.parse(savedFolders))
+    const loadPersistedData = async () => {
+      try {
+        // Load folders from localStorage on app start
+        const savedFolders = localStorage.getItem('folders')
+        if (savedFolders) {
+          let loadedFolders = JSON.parse(savedFolders)
+
+          // Validate that files in folders actually exist in IndexedDB
+          const validatedFolders = []
+          for (const folder of loadedFolders) {
+            const validatedFiles = []
+            for (const file of folder.files) {
+              try {
+                // Check if file exists in IndexedDB
+                const fileBlob = await fileDB.getFile(file.id)
+                if (fileBlob) {
+                  validatedFiles.push(file)
+                } else {
+                  console.warn(`File ${file.name} (${file.id}) not found in IndexedDB, removing from folder`)
+                }
+              } catch (error) {
+                console.warn(`Error checking file ${file.name}:`, error)
+              }
+            }
+
+            // Only keep folders that have files or are explicitly created (not empty due to missing files)
+            if (validatedFiles.length > 0 || folder.files.length === 0) {
+              validatedFolders.push({
+                ...folder,
+                files: validatedFiles
+              })
+            }
+          }
+
+          setFolders(validatedFolders)
+          console.log(`Loaded ${validatedFolders.length} folders with ${validatedFolders.reduce((total, folder) => total + folder.files.length, 0)} files from localStorage`)
+        } else {
+          // If no folders in localStorage, try to rebuild from IndexedDB files
+          try {
+            const allFiles = await fileDB.getAllFiles()
+            if (allFiles.length > 0) {
+              console.log('No folder structure found, creating default folder for orphaned files')
+              // Create a default folder for any orphaned files
+              const defaultFolder = {
+                id: 'recovered-' + Date.now(),
+                name: 'Recovered Files',
+                files: allFiles.map(file => ({
+                  id: file.id,
+                  name: file.name,
+                  type: file.type
+                })),
+                expanded: true
+              }
+              setFolders([defaultFolder])
+              // Save this recovered structure
+              localStorage.setItem('folders', JSON.stringify([defaultFolder]))
+              toast.success(`Recovered ${allFiles.length} files into a default folder`)
+              console.log(`Recovered ${allFiles.length} orphaned files into default folder`)
+            }
+          } catch (error) {
+            console.error('Error recovering files:', error)
+          }
+        }
+
+        // Load processed data from IndexedDB on app start
+        try {
+          const allJsonData = await fileDB.getAllJsonData()
+          const processedDataMap = {}
+
+          // Only keep processed data for files that actually exist
+          for (const entry of allJsonData) {
+            try {
+              const fileExists = await fileDB.getFile(entry.id)
+              if (fileExists) {
+                processedDataMap[entry.id] = entry.data
+              } else {
+                console.warn(`Processed data for non-existent file ${entry.id}, cleaning up`)
+                await fileDB.deleteJsonData(entry.id)
+              }
+            } catch (error) {
+              console.warn(`Error validating processed data for ${entry.id}:`, error)
+            }
+          }
+
+          if (Object.keys(processedDataMap).length > 0) {
+            setProcessedData(processedDataMap)
+            console.log(`Loaded ${Object.keys(processedDataMap).length} processed data entries from IndexedDB`)
+          }
+        } catch (error) {
+          console.error('Failed to load processed data from IndexedDB:', error)
+        }
+
+        // Load sidebar width from localStorage
+        const savedWidth = localStorage.getItem('sidebarWidth')
+        if (savedWidth) {
+          setSidebarWidth(parseInt(savedWidth, 10))
+        }
+      } catch (error) {
+        console.error('Failed to load persisted data:', error)
       }
-    } catch (error) {
-      console.error('Failed to load folders from localStorage:', error)
     }
 
-    // Load sidebar width from localStorage
-    try {
-      const savedWidth = localStorage.getItem('sidebarWidth')
-      if (savedWidth) {
-        setSidebarWidth(parseInt(savedWidth, 10))
-      }
-    } catch (error) {
-      console.error('Failed to load sidebar width from localStorage:', error)
-    }
+    loadPersistedData()
   }, [])
 
   useEffect(() => {
@@ -170,6 +290,11 @@ function App() {
   }, [sidebarWidth])
 
   const handleFileSelect = (file) => {
+    // Don't reload if the same file is already selected
+    if (selectedFile && selectedFile.id === file.id) {
+      return
+    }
+
     setSelectedFile(file)
     if (file.type === 'application/pdf') {
       // Load PDF for viewing
@@ -181,27 +306,49 @@ function App() {
   }
 
   const handleFileDelete = (deletedFileId) => {
+    console.log('Deleting file:', deletedFileId)
+
     // Clear selected file if it was the deleted file
     if (selectedFile && selectedFile.id === deletedFileId) {
       setSelectedFile(null)
     }
 
-    // Clear PDF URL if the deleted file was being viewed
-    if (pdfUrl) {
+    // Get the file type to determine what to clear
+    // We need to find the file in the folders to know its type
+    let deletedFileType = null
+    folders.forEach(folder => {
+      const file = folder.files.find(f => f.id === deletedFileId)
+      if (file) {
+        deletedFileType = file.type
+      }
+    })
+
+    console.log('File type being deleted:', deletedFileType)
+
+    // Clear PDF URL only if the deleted file was a PDF
+    if (deletedFileType === 'application/pdf' && pdfUrl) {
+      console.log('Clearing PDF URL since PDF file was deleted')
       URL.revokeObjectURL(pdfUrl)
       setPdfUrl(null)
     }
 
-    // Clear JSON data if the deleted file was a JSON file being edited
-    if (jsonData && selectedFile && selectedFile.id === deletedFileId && selectedFile.type === 'application/json') {
+    // Clear JSON data only if the deleted file was a JSON file
+    if (deletedFileType === 'application/json' && jsonData && selectedFile && selectedFile.id === deletedFileId) {
+      console.log('Clearing JSON data since JSON file was deleted')
       setJsonData(null)
     }
 
     // Clear processed data if the deleted file was a PDF with processed data
     if (processedData[deletedFileId]) {
+      console.log('Clearing processed data for deleted PDF')
       const newProcessedData = { ...processedData }
       delete newProcessedData[deletedFileId]
       setProcessedData(newProcessedData)
+
+      // Delete from IndexedDB as well
+      fileDB.deleteJsonData(deletedFileId).catch(error => {
+        console.error('Error deleting JSON data from IndexedDB:', error)
+      })
 
       // If the processed data was being viewed, clear it
       if (jsonData && selectedFile && selectedFile.id === deletedFileId) {
@@ -209,9 +356,12 @@ function App() {
       }
     }
 
-    // Clear PDF text content and highlighting
-    setPdfTextContent([])
-    setHighlightedText('')
+    // Clear PDF text content and highlighting only if a PDF was deleted
+    if (deletedFileType === 'application/pdf') {
+      console.log('Clearing PDF text content since PDF was deleted')
+      setPdfTextContent([])
+      setHighlightedText('')
+    }
   }
 
   // Sidebar resize functionality
@@ -395,6 +545,9 @@ function App() {
       "validation_method": "Template_Validated_Against_Actual"
     }
   }
+
+      // Store the processed JSON data in IndexedDB
+      await fileDB.storeJsonData(selectedFile.id, mockJsonData)
 
       setProcessedData(prev => ({ ...prev, [selectedFile.id]: mockJsonData }))
       setJsonData(mockJsonData) // Also set the jsonData for immediate display
