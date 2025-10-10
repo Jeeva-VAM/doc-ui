@@ -16,7 +16,8 @@ function App() {
   const [pdfUrl, setPdfUrl] = useState(null)
   const [jsonData, setJsonData] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [showExtractedText, setShowExtractedText] = useState(false)
+  const [sidebarWidth, setSidebarWidth] = useState(280)
+  const [isResizing, setIsResizing] = useState(false)
   const [pdfTextContent, setPdfTextContent] = useState([])
   const [highlightedText, setHighlightedText] = useState('')
 
@@ -130,6 +131,28 @@ function App() {
   }, [])
 
   useEffect(() => {
+    // Load folders from localStorage on app start
+    try {
+      const savedFolders = localStorage.getItem('folders')
+      if (savedFolders) {
+        setFolders(JSON.parse(savedFolders))
+      }
+    } catch (error) {
+      console.error('Failed to load folders from localStorage:', error)
+    }
+
+    // Load sidebar width from localStorage
+    try {
+      const savedWidth = localStorage.getItem('sidebarWidth')
+      if (savedWidth) {
+        setSidebarWidth(parseInt(savedWidth, 10))
+      }
+    } catch (error) {
+      console.error('Failed to load sidebar width from localStorage:', error)
+    }
+  }, [])
+
+  useEffect(() => {
     try {
       localStorage.setItem('folders', JSON.stringify(folders))
     } catch (error) {
@@ -137,6 +160,14 @@ function App() {
       toast.error('Storage limit exceeded. Please delete some files or folders.')
     }
   }, [folders])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sidebarWidth', sidebarWidth.toString())
+    } catch (error) {
+      console.error('Failed to save sidebar width to localStorage:', error)
+    }
+  }, [sidebarWidth])
 
   const handleFileSelect = (file) => {
     setSelectedFile(file)
@@ -147,6 +178,60 @@ function App() {
       // Load JSON for editing
       loadJsonFile(file)
     }
+  }
+
+  const handleFileDelete = (deletedFileId) => {
+    // Clear selected file if it was the deleted file
+    if (selectedFile && selectedFile.id === deletedFileId) {
+      setSelectedFile(null)
+    }
+
+    // Clear PDF URL if the deleted file was being viewed
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl)
+      setPdfUrl(null)
+    }
+
+    // Clear JSON data if the deleted file was a JSON file being edited
+    if (jsonData && selectedFile && selectedFile.id === deletedFileId && selectedFile.type === 'application/json') {
+      setJsonData(null)
+    }
+
+    // Clear processed data if the deleted file was a PDF with processed data
+    if (processedData[deletedFileId]) {
+      const newProcessedData = { ...processedData }
+      delete newProcessedData[deletedFileId]
+      setProcessedData(newProcessedData)
+
+      // If the processed data was being viewed, clear it
+      if (jsonData && selectedFile && selectedFile.id === deletedFileId) {
+        setJsonData(null)
+      }
+    }
+
+    // Clear PDF text content and highlighting
+    setPdfTextContent([])
+    setHighlightedText('')
+  }
+
+  // Sidebar resize functionality
+  const handleMouseDown = (e) => {
+    setIsResizing(true)
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+    e.preventDefault()
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isResizing) return
+    const newWidth = Math.max(200, Math.min(500, e.clientX))
+    setSidebarWidth(newWidth)
+  }
+
+  const handleMouseUp = () => {
+    setIsResizing(false)
+    document.removeEventListener('mousemove', handleMouseMove)
+    document.removeEventListener('mouseup', handleMouseUp)
   }
 
   const loadPdfFile = async (file) => {
@@ -335,40 +420,50 @@ function App() {
   return (
     <div className="app">
       <Toaster />
-      <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
+      <div 
+        className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} 
+        style={{ width: sidebarCollapsed ? '60px' : `${sidebarWidth}px` }}
+      >
         <Sidebar
           folders={folders}
           setFolders={setFolders}
           selectedFolder={selectedFolder}
           setSelectedFolder={setSelectedFolder}
           onFileSelect={handleFileSelect}
+          onFileDelete={handleFileDelete}
           selectedFileIds={selectedFile ? [selectedFile.id] : []}
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         />
+        {!sidebarCollapsed && (
+          <div 
+            className="sidebar-resize-handle"
+            onMouseDown={handleMouseDown}
+          />
+        )}
       </div>
       <div className={`main-panel ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="controls">
           {selectedFile && <div className="selected-file">{selectedFile.type === 'application/pdf' ? 'PDF' : 'JSON'}: {selectedFile.name}</div>}
-          {selectedFile && selectedFile.type === 'application/pdf' && <button onClick={handleProcessPdf}>Process PDF</button>}
-          {selectedFile && selectedFile.type === 'application/pdf' && <button onClick={handleViewPdf}>View PDF</button>}
-          {selectedFile && selectedFile.type === 'application/pdf' && pdfTextContent.length > 0 && (
-            <button onClick={() => setShowExtractedText(!showExtractedText)}>
-              {showExtractedText ? 'Hide' : 'Show'} Extracted Text
-            </button>
-          )}
           {selectedFile && selectedFile.type === 'application/pdf' && !!(processedData[selectedFile.id]) && <button onClick={handleViewResult}>View Result</button>}
         </div>
         <div className="content">
           <div className="split-panel">
             <div className="panel-left">
-              {pdfUrl && <FileViewer 
-                pdfUrl={pdfUrl} 
-                highlightedText={highlightedText}
-                onTextSelect={(selectedText) => {
-                  setHighlightedText(selectedText)
-                }}
-              />}
+              {pdfUrl ? (
+                <FileViewer 
+                  pdfUrl={pdfUrl} 
+                  highlightedText={highlightedText}
+                  pdfTextContent={pdfTextContent}
+                  onTextSelect={(selectedText) => {
+                    setHighlightedText(selectedText)
+                  }}
+                />
+              ) : (
+                <div className="empty-panel">
+                  <p className="empty-message">Select a PDF file to view</p>
+                </div>
+              )}
             </div>
             <div className="panel-right">
               {jsonData && typeof jsonData === 'object' ? (
@@ -377,20 +472,13 @@ function App() {
                   setJsonData={(data) => setJsonData(data)}
                   onFieldClick={highlightTextInPdf}
                 />
-              ) : null}
+              ) : (
+                <div className="empty-panel">
+                  <p className="empty-message">Select a JSON file or process a PDF to view results</p>
+                </div>
+              )}
             </div>
           </div>
-          {showExtractedText && pdfTextContent.length > 0 && (
-            <div className="extracted-text-panel">
-              <h3>Extracted PDF Text (for debugging)</h3>
-              {pdfTextContent.map(page => (
-                <div key={page.pageNumber} className="page-text">
-                  <h4>Page {page.pageNumber}</h4>
-                  <pre className="text-content">{page.text}</pre>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

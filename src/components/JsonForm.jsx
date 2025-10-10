@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useState } from 'react'
 import toast from 'react-hot-toast'
+import * as XLSX from 'xlsx'
 
 const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
+  const [viewMode, setViewMode] = useState('form') // 'form' or 'json'
   const handleExportJson = () => {
     const dataStr = JSON.stringify(jsonData, null, 2)
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
@@ -16,26 +18,49 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
     toast.success('JSON exported successfully!')
   }
 
-  const calculateStats = (obj) => {
-    let total = 0
-    let nullCount = 0
-
-    const countValues = (value) => {
-      if (value === null || value === undefined || value === '') {
-        nullCount++
-        total++
-      } else if (Array.isArray(value)) {
-        value.forEach(item => countValues(item))
-      } else if (typeof value === 'object' && value !== null) {
-        Object.values(value).forEach(val => countValues(val))
-      } else {
-        total++
+  const handleExportExcel = () => {
+    try {
+      // Flatten the JSON data for Excel export
+      const flattenObject = (obj, prefix = '') => {
+        let flattened = {}
+        
+        for (let key in obj) {
+          if (obj.hasOwnProperty(key)) {
+            let newKey = prefix ? `${prefix}.${key}` : key
+            
+            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+              Object.assign(flattened, flattenObject(obj[key], newKey))
+            } else if (Array.isArray(obj[key])) {
+              // For arrays, create separate rows or flatten as comma-separated values
+              flattened[newKey] = obj[key].join(', ')
+            } else {
+              flattened[newKey] = obj[key]
+            }
+          }
+        }
+        
+        return flattened
       }
-    }
 
-    countValues(obj)
-    return { total, nullCount }
+      const flattenedData = flattenObject(jsonData)
+      
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet([flattenedData])
+      
+      // Create workbook
+      const wb = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(wb, ws, 'Extracted Data')
+      
+      // Generate Excel file
+      XLSX.writeFile(wb, 'extracted-data.xlsx')
+      
+      toast.success('Excel exported successfully!')
+    } catch (error) {
+      console.error('Error exporting Excel:', error)
+      toast.error('Error exporting Excel file')
+    }
   }
+
   const updateNestedValue = (obj, path, value) => {
     if (path.length === 0) return value
     const [head, ...tail] = path
@@ -167,25 +192,26 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
         <h3>Extracted Result</h3>
         <div className="form-actions">
           <button onClick={handleExportJson} className="export-btn">Export JSON</button>
-          <div className="form-stats">
-            {jsonData && (() => {
-              const stats = calculateStats(jsonData)
-              return (
-                <div className="stats-info">
-                  <span>Total: {stats.total}</span>
-                  <span>Empty: {stats.nullCount}</span>
-                  <span>Filled: {stats.total - stats.nullCount}</span>
-                </div>
-              )
-            })()}
-          </div>
+          <button onClick={handleExportExcel} className="export-btn excel-btn">Export Excel</button>
+          <button 
+            onClick={() => setViewMode(viewMode === 'form' ? 'json' : 'form')}
+            className="toggle-btn"
+          >
+            {viewMode === 'form' ? 'View Raw JSON' : 'View Form'}
+          </button>
         </div>
       </div>
-      <div className="form-fields">
-        {Object.entries(jsonData).map(([key, value]) =>
-          renderField(key, value)
-        )}
-      </div>
+      {viewMode === 'json' ? (
+        <div className="raw-json-view">
+          <pre>{JSON.stringify(jsonData, null, 2)}</pre>
+        </div>
+      ) : (
+        <div className="form-fields">
+          {Object.entries(jsonData).map(([key, value]) =>
+            renderField(key, value)
+          )}
+        </div>
+      )}
     </div>
   )
 }

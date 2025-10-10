@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { fileDB } from '../utils/db'
 
-const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse }) => {
+const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse, onFileDelete }) => {
   const [newFolderName, setNewFolderName] = useState('')
   const [dragOverFolder, setDragOverFolder] = useState(null)
 
@@ -31,6 +31,10 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
     try {
       await fileDB.deleteFile(fileId)
       setFolders(folders.map(f => f.id === folderId ? { ...f, files: f.files.filter(file => file.id !== fileId) } : f))
+      // Clear the view if the deleted file was being displayed
+      if (onFileDelete) {
+        onFileDelete(fileId)
+      }
       toast.success('File deleted')
     } catch (error) {
       console.error('Error deleting file:', error)
@@ -134,7 +138,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                     {folder.files.map(file => (
                       <div key={file.id} className={`file ${selectedFileIds.includes(file.id) ? 'selected' : ''}`} onClick={() => onFileSelect(file)}>
                         <FileIcon size={16} />
-                        <span>{file.name}</span>
+                        <span title={file.name}>{file.name}</span>
                         <button onClick={(e) => { e.stopPropagation(); deleteFile(folder.id, file.id) }}><Trash2 size={16} /></button>
                       </div>
                     ))}
