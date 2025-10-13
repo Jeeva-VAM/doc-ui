@@ -727,13 +727,18 @@ mark {
 
 .field {
   display: flex;
-  margin-bottom: 8px;
-  align-items: center;
+  margin-bottom: 12px;
+  align-items: flex-start;
+  gap: 12px;
 }
 
 .field label {
-  width: 200px;
-  margin-right: 10px;
+  min-width: 180px;
+  max-width: 250px;
+  word-wrap: break-word;
+  word-break: break-word;
+  flex-shrink: 0;
+  padding-top: 8px;
 }
 
 .field input {
@@ -826,7 +831,7 @@ mark {
   overflow-x: auto;
 }
 
-.raw-json-view pre {
+.raw-json-view textarea {
   color: #fff;
   font-family: 'Courier New', monospace;
   font-size: 12px;
@@ -834,6 +839,35 @@ mark {
   margin: 0;
   white-space: pre-wrap;
   word-wrap: break-word;
+  overflow-wrap: break-word;
+  background-color: transparent;
+  border: 1px solid #555;
+  outline: none;
+  resize: vertical;
+  min-height: 400px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  tab-size: 2;
+  -moz-tab-size: 2;
+}
+
+.raw-json-view textarea:focus {
+  border-color: #007acc;
+}
+
+.raw-json-view.has-error textarea {
+  border-color: #ff4444;
+}
+
+.json-error {
+  background-color: #ff4444;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 10px;
 }
 
 .form-fields {
@@ -843,10 +877,12 @@ mark {
 }
 
 .field-label {
-  font-weight: bold;
-  color: #ccc;
-  margin-bottom: 5px;
+  font-weight: 500;
+  color: #e6e6e6;
+  margin-bottom: 4px;
   display: block;
+  line-height: 1.4;
+  font-size: 14px;
 }
 
 .clickable-label {
@@ -860,7 +896,8 @@ mark {
 }
 
 .field input {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 8px;
   background-color: #333;
   border: 1px solid #555;
@@ -888,12 +925,26 @@ mark {
   padding: 15px;
   border-radius: 6px;
   background-color: #1a1a1a;
+  margin-bottom: 15px;
+}
+
+.object-field > .field-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #87ceeb;
+  margin-bottom: 12px;
+  display: block;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
 }
 
 .nested-object {
-  margin-top: 10px;
-  padding-left: 10px;
-  border-left: 2px solid #555;
+  margin-top: 15px;
+  padding: 10px;
+  padding-left: 15px;
+  border-left: 3px solid #555;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 0 4px 4px 0;
 }
 
 .array-field {
@@ -901,6 +952,17 @@ mark {
   padding: 15px;
   border-radius: 6px;
   background-color: #1a1a1a;
+  margin-bottom: 15px;
+}
+
+.array-field > .field-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #98fb98;
+  margin-bottom: 12px;
+  display: block;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
 }
 
 .array-items {

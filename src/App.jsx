@@ -54,51 +54,32 @@ function App() {
       return
     }
 
+    // Convert field names to human-readable format
+    const normalizeFieldName = (text) => {
+      return text
+        // Replace underscores with spaces
+        .replace(/_/g, ' ')
+        // Convert camelCase to space-separated
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        // Clean up multiple spaces
+        .replace(/\s+/g, ' ')
+        // Trim and convert to title case for better matching
+        .trim()
+        .toLowerCase()
+    }
+
     // Clean the search text (remove extra spaces, etc.)
-    const cleanSearchText = searchText.trim()
+    const cleanSearchText = normalizeFieldName(searchText)
     if (!cleanSearchText) {
       setHighlightedText('')
       return
     }
 
+    console.log(`Searching for: "${searchText}" -> normalized: "${cleanSearchText}"`)
     setHighlightedText(cleanSearchText)
 
-    // Find the page containing the text - try multiple search strategies
-    for (const page of pdfTextContent) {
-      // Try exact match first
-      if (page.text.toLowerCase().includes(cleanSearchText.toLowerCase())) {
-        scrollToPage(page.pageNumber)
-        return
-      }
-
-      // Try searching individual words (longer than 3 chars)
-      const searchWords = cleanSearchText.split(/\s+/).filter(word => word.length > 3)
-      const foundWords = searchWords.filter(word =>
-        page.text.toLowerCase().includes(word.toLowerCase())
-      )
-
-      if (foundWords.length > 0) {
-        scrollToPage(page.pageNumber)
-        return
-      }
-
-      // Try partial matches for numbers and short terms
-      if (cleanSearchText.length <= 10) {
-        const cleanLower = cleanSearchText.toLowerCase()
-        const pageLower = page.text.toLowerCase()
-        let matchCount = 0
-        for (let i = 0; i < cleanSearchText.length; i++) {
-          if (pageLower.includes(cleanLower[i])) matchCount++
-        }
-        if (matchCount > cleanSearchText.length * 0.7) { // 70% character match
-          scrollToPage(page.pageNumber)
-          return
-        }
-      }
-    }
-
-    // If text not found, clear highlight
-    setHighlightedText('')
+    // The FileViewer component will handle scrolling to the found text
+    // and display bounding boxes automatically
   }
 
   // Function to clear all stored data (for debugging/reset purposes)
@@ -622,7 +603,17 @@ function App() {
               {jsonData && typeof jsonData === 'object' ? (
                 <JsonForm
                   jsonData={jsonData}
-                  setJsonData={(data) => setJsonData(data)}
+                  setJsonData={(data) => {
+                    setJsonData(data)
+                    // Also update processedData for persistence
+                    if (selectedFile) {
+                      setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
+                      // Save to IndexedDB for permanent persistence
+                      fileDB.storeJsonData(selectedFile.id, data).catch(error => {
+                        console.error('Failed to save JSON data to IndexedDB:', error)
+                      })
+                    }
+                  }}
                   onFieldClick={highlightTextInPdf}
                 />
               ) : (

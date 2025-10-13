@@ -1,9 +1,71 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import * as XLSX from 'xlsx'
 
 const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
   const [viewMode, setViewMode] = useState('form') // 'form' or 'json'
+  const [rawJsonText, setRawJsonText] = useState('')
+  const [jsonError, setJsonError] = useState('')
+
+  // Update raw JSON text when jsonData changes
+  useEffect(() => {
+    if (jsonData) {
+      setRawJsonText(JSON.stringify(jsonData, null, 2))
+      setJsonError('')
+    } else {
+      // Initialize with empty object if no data
+      setRawJsonText('{}')
+      setJsonError('')
+    }
+  }, [jsonData])
+
+  // Ensure raw JSON text is initialized when switching to JSON view
+  useEffect(() => {
+    if (viewMode === 'json' && !rawJsonText) {
+      if (jsonData) {
+        setRawJsonText(JSON.stringify(jsonData, null, 2))
+      } else {
+        setRawJsonText('{}')
+      }
+    }
+  }, [viewMode, jsonData, rawJsonText])
+
+  // Handle raw JSON text changes
+  const handleRawJsonChange = (e) => {
+    const newText = e.target.value
+    setRawJsonText(newText)
+
+    // Only try to parse if the text is not empty
+    if (newText.trim() === '') {
+      setJsonError('')
+      return
+    }
+
+    try {
+      const parsed = JSON.parse(newText)
+      setJsonData(parsed)
+      setJsonError('')
+    } catch (error) {
+      // Show error but don't prevent future updates
+      setJsonError('Invalid JSON: ' + error.message)
+    }
+  }
+
+  // Handle keyboard events for better JSON editing
+  const handleKeyDown = (e) => {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      const start = e.target.selectionStart
+      const end = e.target.selectionEnd
+      const newText = rawJsonText.substring(0, start) + '  ' + rawJsonText.substring(end)
+      setRawJsonText(newText)
+
+      // Set cursor position after the inserted tabs
+      setTimeout(() => {
+        e.target.selectionStart = e.target.selectionEnd = start + 2
+      }, 0)
+    }
+  }
 
   // Helper function to check if a value is empty (should not trigger search)
   const isEmptyValue = (value) => {
@@ -202,7 +264,14 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
           <button onClick={handleExportJson} className="export-btn">Export JSON</button>
           <button onClick={handleExportExcel} className="export-btn excel-btn">Export Excel</button>
           <button 
-            onClick={() => setViewMode(viewMode === 'form' ? 'json' : 'form')}
+            onClick={() => {
+              if (viewMode === 'json' && jsonError) {
+                // Don't switch to form view if JSON has errors
+                toast.error('Please fix JSON errors before switching to form view')
+                return
+              }
+              setViewMode(viewMode === 'form' ? 'json' : 'form')
+            }}
             className="toggle-btn"
           >
             {viewMode === 'form' ? 'View Raw JSON' : 'View Form'}
@@ -210,8 +279,19 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
         </div>
       </div>
       {viewMode === 'json' ? (
-        <div className="raw-json-view">
-          <pre>{JSON.stringify(jsonData, null, 2)}</pre>
+        <div className={`raw-json-view ${jsonError ? 'has-error' : ''}`}>
+          {jsonError && (
+            <div className="json-error">
+              {jsonError}
+            </div>
+          )}
+          <textarea
+            value={rawJsonText}
+            onChange={handleRawJsonChange}
+            onKeyDown={handleKeyDown}
+            className="json-textarea"
+            placeholder="Enter JSON here..."
+          />
         </div>
       ) : (
         <div className="form-fields">
