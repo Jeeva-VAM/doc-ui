@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
+import { pdfjs } from 'react-pdf';
 
 // Set worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -14,186 +12,245 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
   const [matches, setMatches] = useState([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
   const [totalMatches, setTotalMatches] = useState(0);
-  const [textItems, setTextItems] = useState({});
-  const [highlightBoxes, setHighlightBoxes] = useState([]);
-  const [pageRefs, setPageRefs] = useState({});
+  const [canvases, setCanvases] = useState([]);
+  const [contexts, setContexts] = useState([]);
+  const [pages, setPages] = useState([]);
+  const [viewports, setViewports] = useState([]);
+  const [pdfDoc, setPdfDoc] = useState(null);
   const fileViewerRef = useRef(null);
-  const pdfDocumentRef = useRef(null);
 
-  // Extract text with positions from PDF
-  const extractTextWithPositions = async (pdf) => {
-    const allTextItems = {};
-    
-    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const textContent = await page.getTextContent();
-      const viewport = page.getViewport({ scale: 1.0 });
-      
-      allTextItems[pageNum] = {
-        items: textContent.items.map(item => ({
-          text: item.str,
-          x: item.transform[4],
-          y: viewport.height - item.transform[5],
-          width: item.width,
-          height: item.height,
-          transform: item.transform
-        })),
-        viewport
-      };
-    }
-    
-    return allTextItems;
-  };
-
-  // Load PDF and extract text positions
+  // Load PDF and render to canvases
   useEffect(() => {
     if (!pdfUrl) return;
 
-    const loadPdfText = async () => {
+    const loadPdf = async () => {
       try {
+        setIsLoading(true);
         const loadingTask = pdfjs.getDocument(pdfUrl);
         const pdf = await loadingTask.promise;
-        pdfDocumentRef.current = pdf;
-        const items = await extractTextWithPositions(pdf);
-        setTextItems(items);
+        setPdfDoc(pdf);
+        const numPages = pdf.numPages;
+
+        const newCanvases = [];
+        const newContexts = [];
+        const newPages = [];
+        const newViewports = [];
+
+        // Clear previous content
+        if (fileViewerRef.current) {
+          const container = fileViewerRef.current.querySelector('.pdf-container');
+          if (container) container.innerHTML = '';
+        }
+
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdf.getPage(i);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          canvas.setAttribute('data-page-number', i.toString());
+
+          const container = fileViewerRef.current?.querySelector('.pdf-container');
+          if (container) container.appendChild(canvas);
+
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+
+          newCanvases.push(canvas);
+          newContexts.push(ctx);
+          newPages.push(page);
+          newViewports.push(viewport);
+        }
+
+        setCanvases(newCanvases);
+        setContexts(newContexts);
+        setPages(newPages);
+        setViewports(newViewports);
+        setNumPages(numPages);
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error loading PDF text:', error);
-        toast.error('Failed to load PDF text content');
+        console.error('Error loading PDF:', error);
+        setIsLoading(false);
+        toast.error('Failed to load PDF');
       }
     };
 
-    loadPdfText();
+    loadPdf();
   }, [pdfUrl]);
 
-  // Find and highlight text when highlightedText changes
+  // Highlight helper function
+  const highlightBox = (ctx, rect) => {
+    ctx.save();
+    ctx.strokeStyle = 'red';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([]); // solid line
+
+    const x1 = Math.min(rect[0], rect[2]);
+    let y1 = Math.min(rect[1], rect[3]);
+    const x2 = Math.max(rect[0], rect[2]);
+    const y2 = Math.max(rect[1], rect[3]);
+
+    // Lift the bounding box to top by 75% of its height
+    const boxHeight = y2 - y1;
+    y1 = y1 - boxHeight * 0.75;
+
+    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+    ctx.restore();
+  };
+
+  // Smart scroll to make highlighted text fully visible
+  const scrollToHighlightedText = (canvas, rect) => {
+    const container = fileViewerRef.current?.querySelector('.pdf-container');
+    if (!container) return;
+
+    // Get container dimensions and scroll position
+    const containerRect = container.getBoundingClientRect();
+    const containerScrollTop = container.scrollTop;
+    const containerScrollLeft = container.scrollLeft;
+
+    // Get canvas position relative to container
+    const canvasRect = canvas.getBoundingClientRect();
+    const canvasTop = canvasRect.top - containerRect.top + containerScrollTop;
+    const canvasLeft = canvasRect.left - containerRect.left + containerScrollLeft;
+
+    // Calculate highlighted rectangle position relative to container
+    const highlightLeft = canvasLeft + rect[0];
+    const highlightTop = canvasTop + rect[1];
+    const highlightRight = canvasLeft + rect[2];
+    const highlightBottom = canvasTop + rect[3];
+
+    // Container viewport dimensions
+    const containerHeight = container.clientHeight;
+    const containerWidth = container.clientWidth;
+
+    // Calculate required scroll positions
+    let newScrollTop = containerScrollTop;
+    let newScrollLeft = containerScrollLeft;
+
+    // Vertical scrolling logic
+    if (highlightTop < containerScrollTop) {
+      // Highlight is above viewport - scroll up to show it at the top with some padding
+      newScrollTop = highlightTop - 20;
+    } else if (highlightBottom > containerScrollTop + containerHeight) {
+      // Highlight is below viewport - scroll down to show it at the bottom with some padding
+      newScrollTop = highlightBottom - containerHeight + 20;
+    } else {
+      // Highlight is partially visible vertically - center it if it's small
+      const highlightHeight = highlightBottom - highlightTop;
+      if (highlightHeight < containerHeight * 0.8) {
+        const centerY = (highlightTop + highlightBottom) / 2;
+        newScrollTop = centerY - containerHeight / 2;
+      }
+    }
+
+    // Horizontal scrolling logic
+    if (highlightLeft < containerScrollLeft) {
+      // Highlight is left of viewport - scroll left to show it
+      newScrollLeft = highlightLeft - 20;
+    } else if (highlightRight > containerScrollLeft + containerWidth) {
+      // Highlight is right of viewport - scroll right to show it
+      newScrollLeft = highlightRight - containerWidth + 20;
+    } else {
+      // Highlight is partially visible horizontally - center it if it's small
+      const highlightWidth = highlightRight - highlightLeft;
+      if (highlightWidth < containerWidth * 0.8) {
+        const centerX = (highlightLeft + highlightRight) / 2;
+        newScrollLeft = centerX - containerWidth / 2;
+      }
+    }
+
+    // Apply smooth scrolling
+    container.scrollTo({
+      top: Math.max(0, newScrollTop),
+      left: Math.max(0, newScrollLeft),
+      behavior: 'smooth'
+    });
+  };
+
+  // Search and highlight text when highlightedText changes
   useEffect(() => {
-    if (!highlightedText || !Object.keys(textItems).length) {
-      setHighlightBoxes([]);
+    if (!highlightedText || !pdfDoc || !contexts.length) {
       setCurrentMatchIndex(-1);
       setTotalMatches(0);
       return;
     }
 
-    const searchText = highlightedText.toLowerCase().trim();
-    if (!searchText) {
-      setHighlightBoxes([]);
-      setCurrentMatchIndex(-1);
-      setTotalMatches(0);
-      return;
-    }
+    const searchAndHighlight = async () => {
+      const term = highlightedText.trim().toLowerCase();
+      if (!term) return;
 
-    console.log(`FileViewer searching for: "${searchText}"`);
-    const boxes = [];
+      console.log(`Searching for: "${term}"`);
 
-    // Search through all pages
-    Object.entries(textItems).forEach(([pageNum, pageData]) => {
-      const { items } = pageData;
-      
-      // Create searchable text variations
-      const searchVariations = [
-        searchText,
-        searchText.replace(/\s+/g, ''), // Remove spaces
-        searchText.replace(/\s+/g, '_'), // Replace spaces with underscores
-        searchText.replace(/\s+/g, '-'), // Replace spaces with hyphens
-        ...searchText.split(' ').filter(word => word.length > 2) // Individual words > 2 chars
-      ];
-      
-      // Try to find exact matches first
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const itemText = item.text.toLowerCase();
-        
-        // Check for any search variation match in single item
-        for (const variation of searchVariations) {
-          if (itemText.includes(variation)) {
-            boxes.push({
-              pageNumber: parseInt(pageNum),
-              x: item.x,
-              y: item.y,
-              width: item.width,
-              height: item.height,
-              text: item.text,
-              matchType: 'exact'
-            });
-            break;
-          }
-        }
-        
-        // Check for multi-word matches across consecutive items
-        if (!boxes.some(box => box.pageNumber === parseInt(pageNum) && 
-                            Math.abs(box.x - item.x) < 10 && 
-                            Math.abs(box.y - item.y) < 10)) {
-          let combinedText = itemText;
-          let startIdx = i;
-          let endIdx = i;
-          let totalWidth = item.width;
-          let minY = item.y;
-          let maxHeight = item.height;
-          let minX = item.x;
-          
-          // Look ahead to combine text
-          for (let j = i + 1; j < Math.min(i + 20, items.length); j++) {
-            const nextItem = items[j];
-            const nextText = nextItem.text.toLowerCase();
-            
-            // Only combine if items are relatively close horizontally
-            if (Math.abs(nextItem.x - (items[j-1].x + items[j-1].width)) < 20) {
-              combinedText += ' ' + nextText;
-              
-              // Check if any search variation matches the combined text
-              for (const variation of searchVariations) {
-                if (combinedText.includes(variation)) {
-                  endIdx = j;
-                  totalWidth = (nextItem.x + nextItem.width) - item.x;
-                  maxHeight = Math.max(maxHeight, nextItem.height);
-                  minY = Math.min(minY, nextItem.y);
-                  minX = Math.min(minX, item.x);
-                  
-                  boxes.push({
-                    pageNumber: parseInt(pageNum),
-                    x: minX,
-                    y: minY,
-                    width: totalWidth,
-                    height: maxHeight,
-                    text: items.slice(startIdx, endIdx + 1).map(it => it.text).join(' '),
-                    matchType: 'combined'
-                  });
-                  
-                  // Skip to end of matched sequence
-                  i = endIdx;
-                  break;
-                }
-              }
-              if (endIdx > i) break; // Found a match, exit inner loop
-            } else {
-              break; // Items too far apart, stop combining
+      // Clear canvases and re-render all pages
+      for (let i = 0; i < pages.length; i++) {
+        await pages[i].render({ canvasContext: contexts[i], viewport: viewports[i] }).promise;
+      }
+
+      let totalMatches = 0;
+      const allMatches = [];
+
+      for (let i = 0; i < pages.length; i++) {
+        const textContent = await pages[i].getTextContent();
+        textContent.items.forEach(item => {
+          if (item.str.toLowerCase().includes(term)) {
+            // Find the exact position of the search term within the text item
+            const itemText = item.str.toLowerCase();
+            const searchTerm = term;
+            const startIndex = itemText.indexOf(searchTerm);
+
+            if (startIndex !== -1) {
+              // Calculate character width approximation
+              const charWidth = item.width / item.str.length;
+              const searchTermWidth = charWidth * searchTerm.length;
+              const offsetX = charWidth * startIndex;
+
+              // Get bounding box coordinates for just the search term
+              const x = item.transform[4] + offsetX;
+              const y = item.transform[5];
+              const width = searchTermWidth;
+              const height = item.height;
+
+              // Use the exact text dimensions without extra padding
+              const adjustedTop = y - height;
+              const adjustedBottom = y;
+
+              // Convert to viewport coordinates
+              const rect = viewports[i].convertToViewportRectangle([x, adjustedTop, x + width, adjustedBottom]);
+              // rect: [x1, y1, x2, y2]
+              highlightBox(contexts[i], rect);
+              totalMatches++;
+
+              // Store match information for navigation
+              allMatches.push({
+                canvas: canvases[i],
+                rect: rect,
+                pageIndex: i
+              });
             }
           }
+        });
+      }
+
+      setMatches(allMatches);
+      setTotalMatches(totalMatches);
+      setCurrentMatchIndex(totalMatches > 0 ? 0 : -1);
+
+      if (totalMatches === 0) {
+        toast.info(`"${highlightedText}" not found in PDF`);
+      } else {
+        toast.success(`Found ${totalMatches} match(es)`);
+
+        // Auto-scroll to the first match with smart positioning
+        if (allMatches.length > 0) {
+          setTimeout(() => {
+            scrollToHighlightedText(allMatches[0].canvas, allMatches[0].rect);
+          }, 100);
         }
       }
-    });
+    };
 
-    // Remove duplicate boxes (same position)
-    const uniqueBoxes = boxes.filter((box, index, self) => 
-      index === self.findIndex(b => 
-        b.pageNumber === box.pageNumber && 
-        Math.abs(b.x - box.x) < 5 && 
-        Math.abs(b.y - box.y) < 5
-      )
-    );
-
-    console.log(`Found ${uniqueBoxes.length} matches for "${searchText}"`);
-    setHighlightBoxes(uniqueBoxes);
-    setTotalMatches(uniqueBoxes.length);
-    setCurrentMatchIndex(uniqueBoxes.length > 0 ? 0 : -1);
-
-    if (uniqueBoxes.length > 0) {
-      setTimeout(() => scrollToPage(uniqueBoxes[0].pageNumber), 100);
-      toast.success(`Found ${uniqueBoxes.length} match(es)`);
-    } else {
-      toast.info(`"${highlightedText}" not found in PDF`);
-    }
-  }, [highlightedText, textItems]);
+    searchAndHighlight();
+  }, [highlightedText, pdfDoc, pages, contexts, viewports, canvases]);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);
@@ -211,7 +268,7 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
 
   // Scroll to a specific page
   const scrollToPage = (pageNumber) => {
-    const pageElement = document.querySelector(`[data-page-number="${pageNumber}"]`);
+    const pageElement = document.querySelector(`canvas[data-page-number="${pageNumber}"]`);
     if (pageElement) {
       pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -219,79 +276,40 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
 
   // Navigate to next match
   const goToNextMatch = () => {
-    if (highlightBoxes.length === 0) return;
-    const nextIndex = (currentMatchIndex + 1) % highlightBoxes.length;
+    if (totalMatches === 0) return;
+    const nextIndex = (currentMatchIndex + 1) % totalMatches;
     setCurrentMatchIndex(nextIndex);
-    const match = highlightBoxes[nextIndex];
-    setTimeout(() => scrollToPage(match.pageNumber), 50);
+
+    // Scroll to the current match
+    if (matches[nextIndex]) {
+      scrollToHighlightedText(matches[nextIndex].canvas, matches[nextIndex].rect);
+    }
+
+    toast.info(`Match ${nextIndex + 1} of ${totalMatches}`);
   };
 
   // Navigate to previous match
   const goToPrevMatch = () => {
-    if (highlightBoxes.length === 0) return;
-    const prevIndex = currentMatchIndex === 0 ? highlightBoxes.length - 1 : currentMatchIndex - 1;
+    if (totalMatches === 0) return;
+    const prevIndex = currentMatchIndex === 0 ? totalMatches - 1 : currentMatchIndex - 1;
     setCurrentMatchIndex(prevIndex);
-    const match = highlightBoxes[prevIndex];
-    setTimeout(() => scrollToPage(match.pageNumber), 50);
+
+    // Scroll to the current match
+    if (matches[prevIndex]) {
+      scrollToHighlightedText(matches[prevIndex].canvas, matches[prevIndex].rect);
+    }
+
+    toast.info(`Match ${prevIndex + 1} of ${totalMatches}`);
   };
 
   // Clear search and hide search bar
   const clearSearch = () => {
-    setHighlightBoxes([]);
     setTotalMatches(0);
     setCurrentMatchIndex(-1);
     // Clear the highlighted text in the parent component
     if (onTextSelect) {
       onTextSelect('');
     }
-  };
-
-  // Render highlight boxes for a specific page
-  const HighlightLayer = ({ pageNumber, canvas }) => {
-    if (!canvas) return null;
-    
-    const pageBoxes = highlightBoxes.filter(box => box.pageNumber === pageNumber);
-    if (pageBoxes.length === 0) return null;
-
-    const pageData = textItems[pageNumber];
-    if (!pageData) return null;
-
-    const scale = canvas.width / pageData.viewport.width;
-
-    return (
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        zIndex: 2
-      }}>
-        {pageBoxes.map((box, idx) => {
-          const isActive = highlightBoxes.indexOf(box) === currentMatchIndex;
-          return (
-            <div
-              key={idx}
-              style={{
-                position: 'absolute',
-                left: `${box.x * scale}px`,
-                top: `${box.y * scale}px`,
-                width: `${box.width * scale}px`,
-                height: `${box.height * scale}px`,
-                border: isActive ? '3px solid #ff0000' : '2px solid #ffa500',
-                backgroundColor: isActive ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 255, 0, 0.3)',
-                boxShadow: isActive ? '0 0 10px rgba(255, 0, 0, 0.5)' : 'none',
-                transition: 'all 0.3s ease',
-                pointerEvents: 'none',
-                boxSizing: 'border-box'
-              }}
-              title={box.text}
-            />
-          );
-        })}
-      </div>
-    );
   };
 
   return (
@@ -303,34 +321,10 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
               Loading PDF pages...
             </div>
           )}
-          <Document
-            file={pdfUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            onLoadStart={onLoadStart}
-            loading=""
-            className="pdf-container"
-          >
-            {Array.from(new Array(numPages), (el, index) => {
-              const pageNumber = index + 1;
-              return (
-                <div key={`page_wrapper_${pageNumber}`} style={{ position: 'relative' }}>
-                  <Page
-                    pageNumber={pageNumber}
-                    renderTextLayer={false}
-                    renderAnnotationLayer={false}
-                    className="pdf-page"
-                    data-page-number={pageNumber}
-                    onRenderSuccess={(page) => {
-                      setPageRefs(prev => ({ ...prev, [pageNumber]: page.canvas }));
-                    }}
-                  />
-                  {pageRefs[pageNumber] && <HighlightLayer pageNumber={pageNumber} canvas={pageRefs[pageNumber]} />}
-                </div>
-              );
-            })}
-          </Document>
-          {highlightBoxes.length > 0 && (
+          <div className="pdf-container">
+            {/* Canvases are dynamically added here */}
+          </div>
+          {totalMatches > 0 && (
             <div className="search-bar">
               <div className="search-info">
                 {currentMatchIndex + 1} of {totalMatches}
