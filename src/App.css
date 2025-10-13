@@ -224,7 +224,7 @@
 
 .selected-file {
   font-weight: bold;
-  margin-bottom: 10px;
+  /* margin-bottom: 10px; */
   color: #007bff;
 }
 
@@ -568,7 +568,7 @@ mark {
   }
   
   .controls {
-    padding: 8px;
+    /* padding: 8px; */
   }
   
   .controls button {
@@ -580,7 +580,7 @@ mark {
   
   .selected-file {
     font-size: 14px;
-    margin-bottom: 8px;
+    /* margin-bottom: 8px; */
   }
   
   .file-viewer {
@@ -613,7 +613,7 @@ mark {
   }
   
   .controls {
-    padding: 6px;
+    /* padding: 6px; */
   }
   
   .controls button {
@@ -655,7 +655,7 @@ mark {
   .form-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    /* gap: 10px; */
   }
   
   .form-actions {
@@ -760,6 +760,7 @@ mark {
 /* New form styles */
 .json-form {
   padding: 20px;
+  padding-top: 0;
   overflow-y: auto;
   height: 100%;
   min-height: 0; /* Allow flex item to shrink */
@@ -773,11 +774,18 @@ mark {
   margin-bottom: 20px;
   border-bottom: 1px solid #444;
   padding-bottom: 10px;
+  position: sticky;
+  top: 0;
+  background-color: #1a1a1a;
+  z-index: 10;
+  padding-top: 15px;
+  margin-top: 0;
 }
 
 .form-header h3 {
   margin: 0;
   color: #fff;
+  font-size: 14px;
 }
 
 .form-actions {
@@ -793,7 +801,7 @@ mark {
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .export-btn:hover {
@@ -815,7 +823,7 @@ mark {
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .toggle-btn:hover {

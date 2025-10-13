@@ -94,7 +94,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
         <span>
           {isDragActive
             ? 'Drop files here...'
-            : 'Drag & drop PDFs/JSONs or click to upload'
+            : 'Drag & drop PDFs or click to upload'
           }
         </span>
       </div>

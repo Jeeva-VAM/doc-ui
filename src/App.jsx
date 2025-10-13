@@ -16,7 +16,7 @@ function App() {
   const [pdfUrl, setPdfUrl] = useState(null)
   const [jsonData, setJsonData] = useState(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [sidebarWidth, setSidebarWidth] = useState(280)
+  const [sidebarWidth, setSidebarWidth] = useState(240)
   const [isResizing, setIsResizing] = useState(false)
   const [pdfTextContent, setPdfTextContent] = useState([])
   const [highlightedText, setHighlightedText] = useState('')
@@ -101,7 +101,7 @@ function App() {
       setJsonData(null)
       setPdfTextContent([])
       setHighlightedText('')
-      setSidebarWidth(280)
+      setSidebarWidth(240)
 
       toast.success('All data cleared successfully')
     } catch (error) {

@@ -123,11 +123,11 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
     const containerHeight = container.clientHeight;
     const containerWidth = container.clientWidth;
 
-    // Calculate required scroll positions
+    // Calculate required scroll positions to make highlighted text visible
     let newScrollTop = containerScrollTop;
     let newScrollLeft = containerScrollLeft;
 
-    // Vertical scrolling logic
+    // Vertical scrolling logic - make sure highlight is visible
     if (highlightTop < containerScrollTop) {
       // Highlight is above viewport - scroll up to show it at the top with some padding
       newScrollTop = highlightTop - 20;
@@ -143,7 +143,7 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
       }
     }
 
-    // Horizontal scrolling logic
+    // Horizontal scrolling logic - make sure highlight is visible
     if (highlightLeft < containerScrollLeft) {
       // Highlight is left of viewport - scroll left to show it
       newScrollLeft = highlightLeft - 20;
