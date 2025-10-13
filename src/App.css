@@ -1,3 +1,158 @@
+/* Extra responsive tweaks for all breakpoints */
+@media (max-width: 1200px) {
+  .app {
+    flex-direction: column;
+    height: auto;
+  }
+  .sidebar {
+    min-width: 0;
+    width: 220px;
+    padding: 12px;
+  }
+  .main-panel {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    width: 180px;
+    padding: 8px;
+  }
+  .main-panel {
+    padding: 6px;
+  }
+  .controls {
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px;
+  }
+  .folders-list {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 8px;
+  }
+  .folder {
+    min-width: 140px;
+    margin-right: 8px;
+  }
+  .files-list {
+    margin-left: 6px;
+  }
+}
+
+@media (max-width: 600px) {
+  .app {
+    flex-direction: column;
+    height: auto;
+  }
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    padding: 6px;
+    max-height: 160px;
+    border-bottom: 1px solid #333;
+  }
+  .main-panel {
+    height: calc(100vh - 160px);
+    padding: 4px;
+  }
+  .sidebar-header {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sidebar-header input {
+    width: 100%;
+    font-size: 14px;
+    padding: 6px;
+  }
+  .sidebar-header button {
+    padding: 6px;
+    font-size: 14px;
+  }
+  .folders-list {
+    flex-direction: row;
+    gap: 6px;
+    padding-bottom: 6px;
+  }
+  .folder {
+    min-width: 120px;
+    margin-right: 6px;
+  }
+  .files-list {
+    margin-left: 4px;
+  }
+  .file {
+    font-size: 13px;
+    padding: 4px;
+  }
+  .file span {
+    max-width: 90px;
+    font-size: 13px;
+  }
+  .upload-area {
+    padding: 10px;
+    font-size: 13px;
+  }
+  .controls button {
+    padding: 6px 10px;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .selected-file {
+    font-size: 13px;
+  }
+  .file-viewer {
+    padding: 6px;
+  }
+  .json-form {
+    padding: 6px;
+  }
+}
+
+@media (max-width: 400px) {
+  .sidebar {
+    padding: 2px;
+    max-height: 100px;
+  }
+  .main-panel {
+    height: calc(100vh - 100px);
+    padding: 2px;
+  }
+  .sidebar-header input {
+    font-size: 12px;
+    padding: 4px;
+  }
+  .sidebar-header button {
+    padding: 4px;
+    font-size: 12px;
+  }
+  .file {
+    font-size: 12px;
+    padding: 2px;
+  }
+  .file span {
+    max-width: 60px;
+    font-size: 12px;
+  }
+  .upload-area {
+    padding: 6px;
+    font-size: 12px;
+  }
+  .controls button {
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  .selected-file {
+    font-size: 12px;
+  }
+  .file-viewer {
+    padding: 2px;
+  }
+  .json-form {
+    padding: 2px;
+  }
+}
 .app {
   display: flex;
   height: 100vh;
@@ -29,21 +184,34 @@
 .sidebar-toggle {
   display: flex;
   justify-content: flex-end;
-  padding: 10px 10px 4px 10px;
+  padding: 10px 10px 4px 15px;
   border-bottom: 1px solid #333;
 }
 
-.sidebar-toggle-btn {
-  background-color: #333;
-  border: 1px solid #555;
+.sidebar-toggle-btn:hover {
+  background-color: #292929;
+}
+
+.sidebar-back {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
+
+.sidebar-back-btn {
+  /* background-color: #007bff; */
+  /* border: 1px solid #0056b3; */
+  border: none;
   color: #fff;
-  padding: 6px;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  text-align: left;
   transition: background-color 0.2s ease;
+}
+
+.sidebar-back-btn:hover {
+  /* background-color: #0056b3; */
 }
 
 .sidebar-resize-handle {
@@ -58,7 +226,7 @@
 }
 
 .sidebar-resize-handle:hover {
-  background-color: rgba(0, 123, 255, 0.3);
+  /* background-color: rgba(0, 123, 255, 0.3); */
 }
 
 .sidebar-resize-handle:active {
@@ -249,7 +417,7 @@
   height: 100%;
 }
 
-.panel-left, .panel-right {
+.panel-right, .panel-left {
   flex: 1;
   overflow: hidden;
   border-right: 1px solid #333;
@@ -258,12 +426,12 @@
   flex-direction: column;
 }
 
-.panel-left {
+.panel-right {
   order: 2;
   border-right: none;
 }
 
-.panel-right {
+.panel-left {
   order: 1;
 }
 
@@ -467,7 +635,7 @@ mark {
   100% { transform: scale(1); }
 }
 
-.panel-right {
+.panel-left {
   border-right: none;
 }
 
@@ -515,14 +683,14 @@ mark {
     flex-direction: column;
   }
   
-  .panel-left, .panel-right {
+  .panel-right, .panel-left {
     flex: none;
     height: 50%;
     border-right: none;
     border-bottom: 1px solid #333;
   }
   
-  .panel-right {
+  .panel-left {
     border-bottom: none;
   }
 }
@@ -625,7 +793,7 @@ mark {
     height: 100%;
   }
   
-  .panel-left, .panel-right {
+  .panel-right, .panel-left {
     height: 50vh;
   }
   

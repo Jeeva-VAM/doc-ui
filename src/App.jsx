@@ -1,15 +1,31 @@
 import { useState, useEffect } from 'react'
 import { Toaster } from 'react-hot-toast'
 import toast from 'react-hot-toast'
+import { Routes, Route, useNavigate } from 'react-router-dom'
 import Sidebar from './components/Sidebar'
 import FileViewer from './components/FileViewer'
 import JsonForm from './components/JsonForm'
+import LandingPage from './components/LandingPage'
 import { fileDB } from './utils/db'
 import { pdfjs } from 'react-pdf'
 import './App.css'
 
 function App() {
+  const [currentProject, setCurrentProject] = useState(null)
   const [folders, setFolders] = useState([])
+  // Helper to persist folders/files structure in IndexedDB per project
+  const persistFoldersToDB = async (projectId, folders) => {
+    if (!projectId) return;
+    try {
+      const { getProject, saveProject } = await import('./utils/projectDB');
+      const project = await getProject(projectId);
+      if (project) {
+        await saveProject({ ...project, items: folders });
+      }
+    } catch (error) {
+      console.error('Failed to persist folders/files to IndexedDB:', error);
+    }
+  } 
   const [selectedFolder, setSelectedFolder] = useState(null)
   const [selectedFile, setSelectedFile] = useState(null)
   const [processedData, setProcessedData] = useState({})
@@ -20,6 +36,7 @@ function App() {
   const [isResizing, setIsResizing] = useState(false)
   const [pdfTextContent, setPdfTextContent] = useState([])
   const [highlightedText, setHighlightedText] = useState('')
+  const navigate = useNavigate();
 
   // Extract text from PDF
   const extractTextFromPdf = async (blob) => {
@@ -84,12 +101,14 @@ function App() {
 
   // Function to clear all stored data (for debugging/reset purposes)
   const clearAllData = async () => {
-    try {
-      // Clear localStorage
-      localStorage.removeItem('folders')
-      localStorage.removeItem('sidebarWidth')
+    if (!currentProject) return
 
-      // Clear IndexedDB
+    try {
+      // Clear localStorage for current project
+      localStorage.removeItem(`folders_${currentProject.id}`)
+      localStorage.removeItem(`sidebarWidth_${currentProject.id}`)
+
+      // Clear IndexedDB (keeping it global for now, but could be made project-specific)
       await fileDB.clearAll()
 
       // Reset state
@@ -103,7 +122,7 @@ function App() {
       setHighlightedText('')
       setSidebarWidth(240)
 
-      toast.success('All data cleared successfully')
+      toast.success('Project data cleared successfully')
     } catch (error) {
       console.error('Error clearing data:', error)
       toast.error('Error clearing data')
@@ -147,68 +166,65 @@ function App() {
     initDB()
   }, [])
 
+  // ...existing code...
+
+  // Handle going back to landing page
+  const handleBackToLanding = () => {
+    setCurrentProject(null)
+    navigate('/')
+    // Reset all state
+    setFolders([])
+    setSelectedFolder(null)
+    setSelectedFile(null)
+    setProcessedData({})
+    setPdfUrl(null)
+    setJsonData(null)
+    setPdfTextContent([])
+    setHighlightedText('')
+  }
+
   useEffect(() => {
+    if (!currentProject) return;
     const loadPersistedData = async () => {
       try {
-        // Load folders from localStorage on app start
-        const savedFolders = localStorage.getItem('folders')
-        if (savedFolders) {
-          let loadedFolders = JSON.parse(savedFolders)
-
+        // Always load folders/files from IndexedDB projectDB
+        const { getProject } = await import('./utils/projectDB');
+        const project = await getProject(currentProject.id);
+        if (project && Array.isArray(project.items)) {
           // Validate that files in folders actually exist in IndexedDB
-          const validatedFolders = []
-          for (const folder of loadedFolders) {
-            const validatedFiles = []
+          const validatedFolders = [];
+          for (const folder of project.items) {
+            const validatedFiles = [];
             for (const file of folder.files) {
               try {
-                // Check if file exists in IndexedDB
-                const fileBlob = await fileDB.getFile(file.id)
+                const fileBlob = await fileDB.getFile(file.id);
                 if (fileBlob) {
-                  validatedFiles.push(file)
+                  validatedFiles.push(file);
                 } else {
-                  console.warn(`File ${file.name} (${file.id}) not found in IndexedDB, removing from folder`)
+                  console.warn(`File ${file.name} (${file.id}) not found in IndexedDB, removing from folder`);
                 }
               } catch (error) {
-                console.warn(`Error checking file ${file.name}:`, error)
+                console.warn(`Error checking file ${file.name}:`, error);
               }
             }
-
-            // Only keep folders that have files or are explicitly created (not empty due to missing files)
-            if (validatedFiles.length > 0 || folder.files.length === 0) {
-              validatedFolders.push({
-                ...folder,
-                files: validatedFiles
-              })
-            }
+            validatedFolders.push({ ...folder, files: validatedFiles });
           }
-
-          setFolders(validatedFolders)
-          console.log(`Loaded ${validatedFolders.length} folders with ${validatedFolders.reduce((total, folder) => total + folder.files.length, 0)} files from localStorage`)
+          setFolders(validatedFolders);
+          console.log(`Loaded ${validatedFolders.length} folders with ${validatedFolders.reduce((total, folder) => total + folder.files.length, 0)} files from IndexedDB projectDB`);
         } else {
-          // If no folders in localStorage, try to rebuild from IndexedDB files
-          try {
-            const allFiles = await fileDB.getAllFiles()
-            if (allFiles.length > 0) {
-              console.log('No folder structure found, creating default folder for orphaned files')
-              // Create a default folder for any orphaned files
-              const defaultFolder = {
-                id: 'recovered-' + Date.now(),
-                name: 'Recovered Files',
-                files: allFiles.map(file => ({
-                  id: file.id,
-                  name: file.name,
-                  type: file.type
-                })),
-                expanded: true
-              }
-              setFolders([defaultFolder])
-              // Save this recovered structure
-              localStorage.setItem('folders', JSON.stringify([defaultFolder]))
-              toast.success(`Recovered ${allFiles.length} files into a default folder`)
-              console.log(`Recovered ${allFiles.length} orphaned files into default folder`)
-            }
-          } catch (error) {
-            console.error('Error recovering files:', error)
+          // If no folders in projectDB, try to rebuild from IndexedDB files
+          const allFiles = await fileDB.getAllFiles();
+          if (allFiles.length > 0) {
+            const defaultFolder = {
+              id: 'recovered-' + Date.now(),
+              name: 'Recovered Files',
+              files: allFiles.map(file => ({ id: file.id, name: file.name, type: file.type })),
+              expanded: true
+            };
+            setFolders([defaultFolder]);
+            await persistFoldersToDB(currentProject.id, [defaultFolder]);
+            toast.success(`Recovered ${allFiles.length} files into a default folder`);
+            console.log(`Recovered ${allFiles.length} orphaned files into default folder`);
           }
         }
 
@@ -240,8 +256,8 @@ function App() {
           console.error('Failed to load processed data from IndexedDB:', error)
         }
 
-        // Load sidebar width from localStorage
-        const savedWidth = localStorage.getItem('sidebarWidth')
+        // Load sidebar width from localStorage for the current project
+        const savedWidth = localStorage.getItem(`sidebarWidth_${currentProject.id}`)
         if (savedWidth) {
           setSidebarWidth(parseInt(savedWidth, 10))
         }
@@ -254,21 +270,23 @@ function App() {
   }, [])
 
   useEffect(() => {
-    try {
-      localStorage.setItem('folders', JSON.stringify(folders))
-    } catch (error) {
-      console.error('Failed to save to localStorage:', error)
-      toast.error('Storage limit exceeded. Please delete some files or folders.')
+    if (!currentProject) return
+
+    // Persist folders/files structure in IndexedDB per project
+    if (currentProject) {
+      persistFoldersToDB(currentProject.id, folders);
     }
-  }, [folders])
+  }, [folders, currentProject])
 
   useEffect(() => {
+    if (!currentProject) return
+
     try {
-      localStorage.setItem('sidebarWidth', sidebarWidth.toString())
+      localStorage.setItem(`sidebarWidth_${currentProject.id}`, sidebarWidth.toString())
     } catch (error) {
       console.error('Failed to save sidebar width to localStorage:', error)
     }
-  }, [sidebarWidth])
+  }, [sidebarWidth, currentProject])
 
   const handleFileSelect = (file) => {
     // Don't reload if the same file is already selected
@@ -278,11 +296,13 @@ function App() {
 
     setSelectedFile(file)
     if (file.type === 'application/pdf') {
-      // Load PDF for viewing
+      // Load PDF for viewing in panel-left, clear JSON
       loadPdfFile(file)
+      setJsonData(null)
     } else if (file.type === 'application/json') {
-      // Load JSON for editing
+      // Load JSON for editing in panel-left, keep PDF in panel-right if open
       loadJsonFile(file)
+      // Do not clear pdfUrl/highlightedText/pdfTextContent
     }
   }
 
@@ -551,81 +571,174 @@ function App() {
     }
   }
 
-  return (
-    <div className="app">
-      <Toaster />
-      <div 
-        className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} 
-        style={{ width: sidebarCollapsed ? '60px' : `${sidebarWidth}px` }}
-      >
-        <Sidebar
-          folders={folders}
-          setFolders={setFolders}
-          selectedFolder={selectedFolder}
-          setSelectedFolder={setSelectedFolder}
-          onFileSelect={handleFileSelect}
-          onFileDelete={handleFileDelete}
-          selectedFileIds={selectedFile ? [selectedFile.id] : []}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        />
-        {!sidebarCollapsed && (
-          <div 
-            className="sidebar-resize-handle"
-            onMouseDown={handleMouseDown}
-          />
-        )}
+  // When a project is selected, load its folders/files from IndexedDB
+  const handleProjectSelect = async (project) => {
+    setCurrentProject(project);
+    navigate(`/project/${project.id}`);
+    // Load folders/files from IndexedDB
+    try {
+      const { getProject } = await import('./utils/projectDB');
+      const dbProject = await getProject(project.id);
+      if (dbProject && Array.isArray(dbProject.items)) {
+        setFolders(dbProject.items);
+      } else {
+        setFolders([]);
+      }
+    } catch (error) {
+      setFolders([]);
+      console.error('Failed to load folders/files from IndexedDB:', error);
+    }
+  };
+
+  // Render landing page if no project is selected
+  if (!currentProject) {
+    return (
+      <div className="app">
+        <Toaster />
+        <LandingPage onProjectSelect={handleProjectSelect} />
       </div>
-      <div className={`main-panel ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-        <div className="controls">
-          {selectedFile && <div className="selected-file">{selectedFile.type === 'application/pdf' ? 'PDF' : 'JSON'}: {selectedFile.name}</div>}
-          {selectedFile && selectedFile.type === 'application/pdf' && !!(processedData[selectedFile.id]) && <button onClick={handleViewResult}>View Result</button>}
+    )
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={
+        <div className="app">
+          <Toaster />
+          <LandingPage onProjectSelect={handleProjectSelect} />
         </div>
-        <div className="content">
-          <div className="split-panel">
-            <div className="panel-left">
-              {pdfUrl ? (
-                <FileViewer 
-                  pdfUrl={pdfUrl} 
-                  highlightedText={highlightedText}
-                  pdfTextContent={pdfTextContent}
-                  onTextSelect={(selectedText) => {
-                    setHighlightedText(selectedText)
-                  }}
-                />
-              ) : (
-                <div className="empty-panel">
-                  <p className="empty-message">Select a PDF file to view</p>
+      } />
+      <Route path="/project/:id" element={
+        <div className="app">
+          <Toaster />
+          <div 
+            className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`} 
+            style={{ width: sidebarCollapsed ? '60px' : `${sidebarWidth}px` }}
+          >
+            <Sidebar
+              folders={folders}
+              setFolders={setFolders}
+              selectedFolder={selectedFolder}
+              setSelectedFolder={setSelectedFolder}
+              onFileSelect={handleFileSelect}
+              onFileDelete={handleFileDelete}
+              selectedFileIds={selectedFile ? [selectedFile.id] : []}
+              collapsed={sidebarCollapsed}
+              onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+              onBackToLanding={handleBackToLanding}
+              currentProject={currentProject}
+            />
+            {!sidebarCollapsed && (
+              <div 
+                className="sidebar-resize-handle"
+                onMouseDown={handleMouseDown}
+              />
+            )}
+          </div>
+          <div className={`main-panel ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+            <div className="controls">
+              {/* Project Name Header inside controls */}
+              {currentProject && (
+                <div className="project-header" style={{padding: '8px 0', fontSize: '1.2rem', fontWeight: 'bold', textAlign: 'center', borderBottom: '1px solid #222', marginBottom: '8px'}}>
+                  {currentProject.name}
                 </div>
               )}
+              {selectedFile && <div className="selected-file">{selectedFile.type === 'application/pdf' ? 'PDF' : 'JSON'}: {selectedFile.name}</div>}
+              {selectedFile && selectedFile.type === 'application/pdf' && !!(processedData[selectedFile.id]) && <button onClick={handleViewResult}>View Result</button>}
             </div>
-            <div className="panel-right">
-              {jsonData && typeof jsonData === 'object' ? (
-                <JsonForm
-                  jsonData={jsonData}
-                  setJsonData={(data) => {
-                    setJsonData(data)
-                    // Also update processedData for persistence
-                    if (selectedFile) {
-                      setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
-                      // Save to IndexedDB for permanent persistence
-                      fileDB.storeJsonData(selectedFile.id, data).catch(error => {
-                        console.error('Failed to save JSON data to IndexedDB:', error)
-                      })
-                    }
-                  }}
-                  onFieldClick={highlightTextInPdf}
-                />
-              ) : (
-                <div className="empty-panel">
-                  <p className="empty-message">Select a JSON file or process a PDF to view results</p>
+            <div className="content">
+              <div className="split-panel">
+                <div className="panel-right">
+                  {!selectedFile ? (
+                    <div className="empty-panel">
+                      <p className="empty-message"></p>
+                    </div>
+                  ) : selectedFile.type === 'application/pdf' && jsonData ? (
+                    <FileViewer 
+                      pdfUrl={pdfUrl} 
+                      highlightedText={highlightedText}
+                      pdfTextContent={pdfTextContent}
+                      onTextSelect={(selectedText) => {
+                        setHighlightedText(selectedText)
+                      }}
+                    />
+                  ) : selectedFile.type === 'application/json' && pdfUrl ? (
+                    <FileViewer 
+                      pdfUrl={pdfUrl} 
+                      highlightedText={highlightedText}
+                      pdfTextContent={pdfTextContent}
+                      onTextSelect={(selectedText) => {
+                        setHighlightedText(selectedText)
+                      }}
+                    />
+                  ) : selectedFile.type === 'application/pdf' ? (
+                    <div className="empty-panel">
+                      <p className="empty-message">Click "Process" to view the result form</p>
+                    </div>
+                  ) : (
+                    <div className="empty-panel">
+                      <p className="empty-message"></p>
+                    </div>
+                  )}
                 </div>
-              )}
+                <div className="panel-left">
+                  {!selectedFile ? (
+                    <div className="empty-panel">
+                      <p className="empty-message">Select a PDF file to view</p>
+                    </div>
+                  ) : selectedFile.type === 'application/pdf' && jsonData ? (
+                    <JsonForm
+                      jsonData={jsonData}
+                      setJsonData={(data) => {
+                        setJsonData(data)
+                        // Also update processedData for persistence
+                        if (selectedFile) {
+                          setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
+                          // Save to IndexedDB for permanent persistence
+                          fileDB.storeJsonData(selectedFile.id, data).catch(error => {
+                            console.error('Failed to save JSON data to IndexedDB:', error)
+                          })
+                        }
+                      }}
+                      onFieldClick={highlightTextInPdf}
+                    />
+                  ) : selectedFile.type === 'application/pdf' && pdfUrl ? (
+                    <FileViewer 
+                      pdfUrl={pdfUrl} 
+                      highlightedText={highlightedText}
+                      pdfTextContent={pdfTextContent}
+                      onTextSelect={(selectedText) => {
+                        setHighlightedText(selectedText)
+                      }}
+                    />
+                  ) : selectedFile.type === 'application/json' && jsonData && typeof jsonData === 'object' ? (
+                    <JsonForm
+                      jsonData={jsonData}
+                      setJsonData={(data) => {
+                        setJsonData(data)
+                        // Also update processedData for persistence
+                        if (selectedFile) {
+                          setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
+                          // Save to IndexedDB for permanent persistence
+                          fileDB.storeJsonData(selectedFile.id, data).catch(error => {
+                            console.error('Failed to save JSON data to IndexedDB:', error)
+                          })
+                        }
+                      }}
+                      onFieldClick={highlightTextInPdf}
+                    />
+                  ) : (
+                    <div className="empty-panel">
+                      <p className="empty-message">Select a JSON file or process a PDF to view results</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      } />
+    </Routes>
   )
 }
 
