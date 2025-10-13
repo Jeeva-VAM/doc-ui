@@ -251,9 +251,9 @@
 .modal-content {
   background-color: #222;
   border-radius: 4px;
-  padding: 40px;
+  padding: 30px;
   width: 90%;
-  max-width: 500px;
+  max-width: 400px;
   max-height: 90vh;
   overflow-y: auto;
   border: 1px solid #333;

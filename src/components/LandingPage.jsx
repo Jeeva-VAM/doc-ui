@@ -6,6 +6,7 @@ const LandingPage = ({ onProjectSelect }) => {
   const [projects, setProjects] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [deleteModal, setDeleteModal] = useState({ show: false, project: null });
   const [newProject, setNewProject] = useState({
     name: '',
     type: '',
@@ -55,9 +56,24 @@ const LandingPage = ({ onProjectSelect }) => {
 
   // Delete a project by id
   const handleDeleteProject = (id) => {
-    deleteProject(id).then(() => {
-      getAllProjects().then(setProjects);
-    });
+    const project = projects.find(p => p.id === id);
+    if (project) {
+      setDeleteModal({ show: true, project });
+    }
+  };
+
+  const confirmDeleteProject = () => {
+    const { project } = deleteModal;
+    setDeleteModal({ show: false, project: null });
+    if (project) {
+      deleteProject(project.id).then(() => {
+        getAllProjects().then(setProjects);
+      });
+    }
+  };
+
+  const cancelDeleteProject = () => {
+    setDeleteModal({ show: false, project: null });
   };
 
   return (
@@ -172,6 +188,20 @@ const LandingPage = ({ onProjectSelect }) => {
                 <button type="submit">Create Project</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && deleteModal.project && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>Confirm Deletion</h2>
+            <p>Are you sure you want to delete the project "{deleteModal.project.name}"? This will permanently delete all folders and files in this project. This action cannot be undone.</p>
+            <div className="modal-actions">
+              <button onClick={cancelDeleteProject}>Cancel</button>
+              <button onClick={confirmDeleteProject} style={{ backgroundColor: '#d32f2f', color: '#fff' }}>Delete Project</button>
+            </div>
           </div>
         </div>
       )}

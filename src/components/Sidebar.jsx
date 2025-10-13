@@ -20,14 +20,77 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
         };
   const [newFolderName, setNewFolderName] = useState('')
   const [dragOverFolder, setDragOverFolder] = useState(null)
+  const [deleteModal, setDeleteModal] = useState({ show: false, type: '', item: null, folderId: null })
 
   const createFolder = () => {
     if (!newFolderName.trim()) return
     const newFolder = {
       id: Date.now().toString(),
       name: newFolderName,
-// ...existing code...
+      files: [],
+      expanded: false
     }
+    const updatedFolders = [...folders, newFolder]
+    setFolders(updatedFolders)
+    persistFoldersToDB(updatedFolders)
+    setNewFolderName('')
+    toast.success(`Folder "${newFolderName}" created`)
+  }
+
+  const deleteFolder = (folderId) => {
+    const folder = folders.find(f => f.id === folderId)
+    if (!folder) return
+    setDeleteModal({ show: true, type: 'folder', item: folder, folderId })
+  }
+
+  const deleteFile = async (folderId, fileId) => {
+    const folder = folders.find(f => f.id === folderId)
+    const file = folder ? folder.files.find(f => f.id === fileId) : null
+    if (!file) {
+      toast.error('File not found')
+      return
+    }
+    setDeleteModal({ show: true, type: 'file', item: file, folderId })
+  }
+
+  const confirmDelete = async () => {
+    const { type, item, folderId } = deleteModal
+    setDeleteModal({ show: false, type: '', item: null, folderId: null })
+
+    if (type === 'folder') {
+      const updatedFolders = folders.filter(f => f.id !== item.id)
+      setFolders(updatedFolders)
+      persistFoldersToDB(updatedFolders)
+      toast.success('Folder deleted')
+    } else if (type === 'file') {
+      try {
+        // Delete from IndexedDB
+        await fileDB.deleteFile(item.id)
+        // If it's a PDF, also delete any associated JSON data
+        if (item.type === 'application/pdf') {
+          await fileDB.deleteJsonData(item.id)
+        }
+
+        // Remove from folders state
+        const updatedFolders = folders.map(f => 
+          f.id === folderId ? { ...f, files: f.files.filter(file => file.id !== item.id) } : f
+        )
+        setFolders(updatedFolders)
+        persistFoldersToDB(updatedFolders)
+        // Notify parent to clear selection if needed
+        if (onFileDelete) {
+          onFileDelete(item.id)
+        }
+        toast.success('File deleted')
+      } catch (error) {
+        console.error('Error deleting file:', error)
+        toast.error('Error deleting file')
+      }
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteModal({ show: false, type: '', item: null, folderId: null })
   }
 
   const createDropzoneConfig = (folderId) => ({
@@ -108,7 +171,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
               color: '#fff',
               fontSize: '1.2rem',
               cursor: 'pointer',
-              width: '32px',
+              width: '32px',  
               height: '32px', 
               borderRadius: '6px',
               marginRight: 'auto',
@@ -196,6 +259,69 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
             ))}
           </div>
         </>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.show && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: '#222',
+            borderRadius: '8px',
+            padding: '20px',
+            maxWidth: '400px',
+            width: '90%',
+            border: '1px solid #333'
+          }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#fff', fontSize: '18px' }}>
+              Confirm Deletion
+            </h3>
+            <p style={{ margin: '0 0 20px 0', color: '#aaa', lineHeight: '1.5' }}>
+              Are you sure you want to delete {deleteModal.type === 'folder' ? 'the folder' : 'the file'} "{deleteModal.item?.name}"?
+              {deleteModal.type === 'folder' && ' This will also delete all files in the folder.'}
+              <br />
+              <strong>This action cannot be undone.</strong>
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#333',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#d32f2f',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
