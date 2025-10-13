@@ -4,7 +4,7 @@ import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { fileDB } from '../utils/db'
 
-const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse, onFileDelete, onBackToLanding, currentProject }) => {
+const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse, onFileDelete, onBackToLanding, currentProject, onProcessFile }) => {
   // Persist folders/files to projectDB whenever they change
         const persistFoldersToDB = async (folders) => {
           if (!currentProject || !currentProject.id) return;
@@ -229,17 +229,15 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                           <button
                             className="sidebar-action-btn"
                             title="Process PDF"
-                            style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#222', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
+                            style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#ffc017', color: '#000', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
                             onClick={e => {
                               e.stopPropagation();
-                              if (typeof window.onProcessFile === 'function') {
-                                window.onProcessFile(file);
-                              } else if (typeof onProcessFile === 'function') {
+                              if (onProcessFile) {
                                 onProcessFile(file);
                               }
                             }}
-                            onMouseOver={e => e.currentTarget.style.background = '#444'}
-                            onMouseOut={e => e.currentTarget.style.background = '#222'}
+                            onMouseOver={e => e.currentTarget.style.background = '#e6a814'}
+                            onMouseOut={e => e.currentTarget.style.background = '#ffc017'}
                           >Process</button>
                         )}
                         <button

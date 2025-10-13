@@ -565,9 +565,58 @@ function App() {
     }
   }
 
-  const handleViewResult = () => {
-    if (selectedFile && selectedFile.type === 'application/pdf' && processedData[selectedFile.id]) {
-      setJsonData(processedData[selectedFile.id])
+  const handleProcessFile = async (file) => {
+    // Check if there's a corresponding JSON file in the pdfs folder
+    // Try multiple possible filename patterns
+    const baseName = file.name.replace(/\.pdf$/, '')
+    const possibleJsonNames = [
+      `${baseName}_analysis.json`,
+      `${baseName} 1_analysis.json`,
+      `${baseName.replace(/\s*\(\d+\)$/, '')} 1_analysis.json`,
+      `${baseName.replace(/\s*\(\d+\)$/, '')}_analysis.json`
+    ]
+
+    console.log('Processing PDF:', file.name, '-> trying JSON names:', possibleJsonNames)
+
+    let jsonData = null
+    let jsonFileName = null
+
+    for (const name of possibleJsonNames) {
+      try {
+        console.log('Trying to fetch:', `/pdfs/${name}`)
+        const response = await fetch(`/pdfs/${name}`)
+        if (response.ok) {
+          jsonData = await response.json()
+          jsonFileName = name
+          console.log('Successfully loaded JSON from:', name)
+          break
+        } else {
+          console.log('Not found:', name, 'status:', response.status)
+        }
+      } catch (error) {
+        console.log('Error fetching:', name, error)
+      }
+    }
+
+    if (jsonData) {
+      setProcessedData(prev => ({ ...prev, [file.id]: jsonData }))
+      // Also save to IndexedDB
+      fileDB.storeJsonData(file.id, jsonData).catch(error => {
+        console.error('Failed to save JSON data to IndexedDB:', error)
+      })
+
+      // Create a virtual JSON file entry and select it
+      const virtualJsonFile = {
+        id: `${file.id}_analysis`,
+        name: jsonFileName,
+        type: 'application/json'
+      }
+      setJsonData(jsonData)
+      setSelectedFile(virtualJsonFile)
+
+      toast.success('PDF processed successfully')
+    } else {
+      toast.error('Analysis JSON file not found. Tried: ' + possibleJsonNames.join(', '))
     }
   }
 
@@ -627,6 +676,7 @@ function App() {
               onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
               onBackToLanding={handleBackToLanding}
               currentProject={currentProject}
+              onProcessFile={handleProcessFile}
             />
             {!sidebarCollapsed && (
               <div 

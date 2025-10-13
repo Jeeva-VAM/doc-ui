@@ -44,13 +44,13 @@
 }
 
 .nav-btn.secondary {
-  background-color: #007bff;
+  background-color: #0064fa;
   color: #fff;
-  border-color: #0056b3;
+  border-color: #0044cc;
 }
 
 .nav-btn.secondary:hover {
-  background-color: #0056b3;
+  background-color: #0044cc;
 }
 
 /* Hero Section */
@@ -61,7 +61,7 @@
   justify-content: center;
   align-items: center;
   text-align: center;
-  padding: 20px 10px;
+  padding: 10px 5px;
   max-width: 1000px;
   margin: 0 auto;
 }
@@ -139,13 +139,13 @@
 }
 
 .hero-btn.primary {
-  background-color: #007bff;
+  background-color: #0064fa;
   color: #fff;
-  border-color: #0056b3;
+  border-color: #0044cc;
 }
 
 .hero-btn.primary:hover {
-  background-color: #0056b3;
+  background-color: #0044cc;
 }
 
 /* Projects Section */
@@ -177,7 +177,7 @@
 
 .project-card:hover {
   background-color: #444;
-  border-color: #007bff;
+  border-color: #0064fa;
 }
 
 .project-card h3 {
@@ -188,7 +188,7 @@
 }
 
 .project-type {
-  color: #007bff;
+  color: #54b741;
   font-weight: 600;
   margin: 0 0 15px 0;
   font-size: 0.9rem;
@@ -310,7 +310,7 @@
 .form-group textarea:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #007bff;
+  border-color: #0064fa;
 }
 
 .form-group input::placeholder,
@@ -352,13 +352,13 @@
 }
 
 .modal-actions button:last-child {
-  background-color: #007bff;
+  background-color: #0064fa;
   color: #fff;
-  border: 1px solid #0056b3;
+  border: 1px solid #0044cc;
 }
 
 .modal-actions button:last-child:hover {
-  background-color: #0056b3;
+  background-color: #0044cc;
 }
 
 /* Delete Button in Project Card */
