@@ -16,6 +16,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   const [contexts, setContexts] = useState([]);
   const [pages, setPages] = useState([]);
   const [viewports, setViewports] = useState([]);
+  const [scales, setScales] = useState([]);
   const [pdfDoc, setPdfDoc] = useState(null);
   const fileViewerRef = useRef(null);
 
@@ -35,6 +36,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         const newContexts = [];
         const newPages = [];
         const newViewports = [];
+        const newScales = [];
 
         // Clear previous content
         if (fileViewerRef.current) {
@@ -42,30 +44,61 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
           if (container) container.innerHTML = '';
         }
 
+        // Get container dimensions for scaling
+        const container = fileViewerRef.current?.querySelector('.pdf-container');
+        const containerWidth = container ? container.clientWidth : 800;
+        const containerHeight = container ? container.clientHeight : 600;
+
         for (let i = 1; i <= numPages; i++) {
           const page = await pdf.getPage(i);
-          const viewport = page.getViewport({ scale: 1.5 });
+
+          // Calculate scale to make each page fit the container height
+          const viewport = page.getViewport({ scale: 1.0 });
+          const pageWidth = viewport.width;
+          const pageHeight = viewport.height;
+
+          // Calculate scale to fit width and height
+          const scaleX = containerWidth / pageWidth;
+          const scaleY = containerHeight / pageHeight;
+          
+          // Make each page fill the container height, but don't exceed reasonable width
+          const fitScale = Math.min(scaleY, scaleX, 3.0); // Allow up to 3x zoom, prioritize height
+
+          // Render at higher resolution for crisp text (2x for better quality)
+          const renderScale = Math.max(fitScale * 2, 1.0); // At least 1.0, but higher for small pages
+          const scaledViewport = page.getViewport({ scale: renderScale });
+
           const canvas = document.createElement('canvas');
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
+          canvas.width = scaledViewport.width;
+          canvas.height = scaledViewport.height;
           canvas.setAttribute('data-page-number', i.toString());
+
+          // Set CSS dimensions to fit container (scaled down from high-res render)
+          const displayWidth = pageWidth * fitScale;
+          const displayHeight = pageHeight * fitScale;
+          canvas.style.width = `${displayWidth}px`;
+          canvas.style.height = `${displayHeight}px`;
+          canvas.style.display = 'block';
+          canvas.style.margin = '0 auto 0 auto'; // No margin between pages since each fills height
 
           const container = fileViewerRef.current?.querySelector('.pdf-container');
           if (container) container.appendChild(canvas);
 
           const ctx = canvas.getContext('2d');
-          await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+          await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
 
           newCanvases.push(canvas);
           newContexts.push(ctx);
           newPages.push(page);
-          newViewports.push(viewport);
+          newViewports.push(scaledViewport);
+          newScales.push(fitScale); // Store the display scale for bbox calculations
         }
 
         setCanvases(newCanvases);
         setContexts(newContexts);
         setPages(newPages);
         setViewports(newViewports);
+        setScales(newScales);
         setNumPages(numPages);
         setIsLoading(false);
       } catch (error) {
@@ -216,14 +249,21 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
 
               // Convert to viewport coordinates
               const rect = viewports[i].convertToViewportRectangle([x, adjustedTop, x + width, adjustedBottom]);
+              
+              // Adjust coordinates for display scale since canvas is CSS scaled
+              const renderScale = viewports[i].scale;
+              const displayScale = scales[i];
+              const scaleFactor = displayScale / renderScale;
+              const adjustedRect = rect.map(coord => coord * scaleFactor);
+              
               // rect: [x1, y1, x2, y2]
-              highlightBox(contexts[i], rect);
+              highlightBox(contexts[i], adjustedRect);
               totalMatches++;
 
               // Store match information for navigation
               allMatches.push({
                 canvas: canvases[i],
-                rect: rect,
+                rect: adjustedRect,
                 pageIndex: i
               });
             }
@@ -283,12 +323,12 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
       const ctx = contexts[pageIndex];
       const viewport = viewports[pageIndex];
       
-      // Apply the same scale used for PDF rendering (1.5) to bbox coordinates
-      const scale = 1.5;
-      const x1 = bbox.x1 * scale;
-      const y1 = bbox.y1 * scale;
-      const x2 = bbox.x2 * scale;
-      const y2 = bbox.y2 * scale;
+      // Scale bbox coordinates to match the render scale (canvas internal coordinates)
+      const renderScale = viewport.scale;
+      const x1 = bbox.x1 * renderScale;
+      const y1 = bbox.y1 * renderScale;
+      const x2 = bbox.x2 * renderScale;
+      const y2 = bbox.y2 * renderScale;
 
       // Draw red rectangle
       ctx.save();

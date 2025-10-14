@@ -477,12 +477,12 @@
   overflow-y: auto;
   background-color: #f5f5f5;
   border-radius: 8px;
-  padding: 20px;
+  padding: 0px;
 }
 
 .pdf-page-container {
   position: relative;
-  margin-bottom: 20px;
+  margin-bottom: 5px;
   background-color: #fff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   border-radius: 4px;
@@ -549,10 +549,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px;
+  padding: 3px;
   background-color: #f5f5f5;
   color: #333;
-  font-size: 16px;
+  font-size: 13px;
   border-radius: 8px;
   margin-bottom: 20px;
 }
