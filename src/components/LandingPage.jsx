@@ -83,11 +83,6 @@ const LandingPage = ({ onProjectSelect }) => {
         <div className="nav-logo">
           <h2>DOC-UI</h2>
         </div>
-        <div className="nav-buttons">
-          <button className="nav-btn secondary" onClick={() => setShowModal(true)}>
-            Create Project
-          </button>
-        </div>
       </div>
 
       {/* Hero Section */}
@@ -112,7 +107,7 @@ const LandingPage = ({ onProjectSelect }) => {
             </button>
           </div>
           <button className="hero-btn primary" onClick={() => setShowModal(true)}>
-            Get Started
+            Create Project
           </button>
         </div>
       </div>
