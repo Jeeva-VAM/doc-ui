@@ -862,6 +862,48 @@ mark {
   }
 }
 
+/* Responsive form field styles */
+@media (max-width: 768px) {
+  .form-field-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .field-label-container {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+  }
+  
+  .field-input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-fields-section {
+    padding: 10px;
+  }
+  
+  .form-field-item {
+    padding: 6px;
+  }
+  
+  .field-label-text {
+    font-size: 13px;
+  }
+  
+  .confidence-indicator {
+    font-size: 11px;
+  }
+  
+  .field-input {
+    padding: 6px;
+    font-size: 13px;
+  }
+}
+
 .json-form h3 {
   margin-top: 0;
 }
@@ -1165,6 +1207,84 @@ mark {
 
 .array-item .field:last-child {
   margin-bottom: 0;
+}
+
+/* Form Fields Section Styles */
+.form-fields-section {
+  border: 1px solid #444;
+  padding: 15px;
+  border-radius: 6px;
+  background-color: #1a1a1a;
+  margin-bottom: 15px;
+}
+
+.form-fields-section > .field-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #87ceeb;
+  margin-bottom: 12px;
+  display: block;
+  border-bottom: 1px solid #444;
+  padding-bottom: 8px;
+}
+
+.form-fields-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-field-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  background-color: #222;
+  border-radius: 4px;
+  border: 1px solid #333;
+}
+
+.field-label-container {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+  max-width: 300px;
+  flex-shrink: 0;
+}
+
+.field-label-text {
+  word-wrap: break-word;
+  word-break: break-word;
+  font-weight: 500;
+  color: #e6e6e6;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.confidence-indicator {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.field-input {
+  flex: 1;
+  padding: 8px;
+  background-color: #333;
+  border: 1px solid #555;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #0064fa;
+}
+
+.field-input::placeholder {
+  color: #888;
+  font-style: italic;
 }
 
 /* PDF text selection and highlighting */

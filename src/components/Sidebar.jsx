@@ -221,7 +221,12 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                 {folder.expanded && (
                   <div className="files-list">
                     {folder.files.map(file => (
-                      <div key={file.id} className={`file ${selectedFileIds.includes(file.id) ? 'selected' : ''}`} onClick={() => onFileSelect(file)}>
+                      <div key={file.id} className={`file ${selectedFileIds.includes(file.id) ? 'selected' : ''}`} onClick={() => {
+                        // Only call onFileSelect if the file is not already selected
+                        if (!selectedFileIds.includes(file.id)) {
+                          onFileSelect(file);
+                        }
+                      }}>
                         <FileIcon size={16} />
                         <span title={file.name}>{file.name}</span>
                         {/* Process button for PDFs */}

@@ -5,7 +5,7 @@ import { pdfjs } from 'react-pdf';
 // Set worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) => {
+const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent, onTextSelect }) => {
   const [selectedText, setSelectedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [numPages, setNumPages] = useState(null);
@@ -251,6 +251,67 @@ const FileViewer = ({ pdfUrl, highlightedText, pdfTextContent, onTextSelect }) =
 
     searchAndHighlight();
   }, [highlightedText, pdfDoc, pages, contexts, viewports, canvases]);
+
+  // Highlight field bbox when highlightedField changes
+  useEffect(() => {
+    if (!highlightedField || !contexts.length) {
+      // Clear any existing field highlights by re-rendering all pages
+      if (pages.length > 0) {
+        pages.forEach(async (page, i) => {
+          await page.render({ canvasContext: contexts[i], viewport: viewports[i] }).promise;
+        });
+      }
+      return;
+    }
+
+    const highlightFieldBbox = async () => {
+      const { page, bbox } = highlightedField;
+      const pageIndex = page - 1; // Convert to 0-based index
+
+      if (pageIndex < 0 || pageIndex >= pages.length) {
+        console.warn(`Invalid page number: ${page}`);
+        return;
+      }
+
+      // Re-render the specific page first to clear any previous highlights
+      await pages[pageIndex].render({ 
+        canvasContext: contexts[pageIndex], 
+        viewport: viewports[pageIndex] 
+      }).promise;
+
+      // Draw the red box overlay
+      const ctx = contexts[pageIndex];
+      const viewport = viewports[pageIndex];
+      
+      // Convert bbox coordinates to canvas coordinates
+      // PDF coordinates are typically from bottom-left, canvas is from top-left
+      const scale = viewport.scale || 1.5;
+      const x1 = bbox.x1 * scale;
+      const y1 = viewport.height - (bbox.y2 * scale); // Flip Y coordinate
+      const x2 = bbox.x2 * scale;
+      const y2 = viewport.height - (bbox.y1 * scale); // Flip Y coordinate
+
+      // Draw red rectangle
+      ctx.save();
+      ctx.strokeStyle = 'red';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]); // Solid red line for field highlights
+      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+      ctx.restore();
+
+      // Scroll to the highlighted field
+      const canvas = canvases[pageIndex];
+      if (canvas) {
+        setTimeout(() => {
+          scrollToHighlightedText(canvas, [x1, y1, x2, y2]);
+        }, 100);
+      }
+
+      console.log(`Highlighted field on page ${page} with bbox:`, bbox);
+    };
+
+    highlightFieldBbox();
+  }, [highlightedField, pages, contexts, viewports, canvases]);
 
   const onDocumentLoadSuccess = ({ numPages }) => {
     setNumPages(numPages);

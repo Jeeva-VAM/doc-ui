@@ -143,7 +143,51 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
     const currentPath = [...path, key]
     const id = currentPath.join('.')
 
-    if (Array.isArray(value)) {
+    if (key === 'form_fields' && Array.isArray(value)) {
+      // Special handling for form_fields array
+      return (
+        <div key={id} className="form-fields-section">
+          <label className="field-label">Form Fields:</label>
+          <div className="form-fields-list">
+            {value.map((field, index) => {
+              // Determine confidence color based on score
+              const confidence = field.confidence || 0;
+              let confidenceColor = '#ff4444'; // red for low confidence
+              if (confidence >= 0.8) confidenceColor = '#54b741'; // green for high confidence
+              else if (confidence >= 0.5) confidenceColor = '#ffc017'; // yellow for medium confidence
+              
+              return (
+                <div key={field.field_id || index} className="form-field-item">
+                  <div className="field-label-container">
+                    <label 
+                      className="field-label-text clickable-label"
+                      onClick={() => onFieldClick && onFieldClick(field)}
+                      title={`Click to highlight field in PDF`}
+                    >
+                      {field.label}:
+                    </label>
+                    <div className="confidence-indicator" style={{ color: confidenceColor }}>
+                      Confidence: {(confidence * 100).toFixed(1)}%
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={field.field_type}
+                    value={field.text_content || ''}
+                    onChange={(e) => {
+                      const newValue = e.target.value
+                      const newData = updateNestedValue(jsonData, [...currentPath, index.toString(), 'text_content'], newValue)
+                      setJsonData(newData)
+                    }}
+                    className="field-input"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )
+    } else if (Array.isArray(value)) {
       return (
         <div key={id} className="array-field">
           <label 
@@ -295,9 +339,11 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
         </div>
       ) : (
         <div className="form-fields">
-          {Object.entries(jsonData).map(([key, value]) =>
-            renderField(key, value)
-          )}
+          {Object.entries(jsonData)
+            .filter(([key]) => !['document_info', 'processing_config', 'summary', 'tables'].includes(key))
+            .map(([key, value]) =>
+              renderField(key, value)
+            )}
         </div>
       )}
     </div>

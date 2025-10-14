@@ -36,6 +36,7 @@ function App() {
   const [isResizing, setIsResizing] = useState(false)
   const [pdfTextContent, setPdfTextContent] = useState([])
   const [highlightedText, setHighlightedText] = useState('')
+  const [highlightedField, setHighlightedField] = useState(null) // For bbox highlighting
   const navigate = useNavigate();
 
   // Extract text from PDF
@@ -65,9 +66,20 @@ function App() {
   }
 
   // Function to highlight text in PDF
-  const highlightTextInPdf = (searchText) => {
+  const highlightTextInPdf = (input) => {
+    // Handle field object with bbox
+    if (typeof input === 'object' && input !== null && input.bbox) {
+      console.log('Highlighting field bbox:', input)
+      setHighlightedField(input)
+      setHighlightedText('') // Clear text highlighting
+      return
+    }
+    
+    // Handle string input (backward compatibility)
+    const searchText = input
     if (!searchText || !pdfTextContent.length) {
       setHighlightedText('')
+      setHighlightedField(null)
       return
     }
 
@@ -89,11 +101,13 @@ function App() {
     const cleanSearchText = normalizeFieldName(searchText)
     if (!cleanSearchText) {
       setHighlightedText('')
+      setHighlightedField(null)
       return
     }
 
     console.log(`Searching for: "${searchText}" -> normalized: "${cleanSearchText}"`)
     setHighlightedText(cleanSearchText)
+    setHighlightedField(null) // Clear bbox highlighting
 
     // The FileViewer component will handle scrolling to the found text
     // and display bounding boxes automatically
@@ -567,56 +581,43 @@ function App() {
 
   const handleProcessFile = async (file) => {
     // Check if there's a corresponding JSON file in the pdfs folder
-    // Try multiple possible filename patterns
-    const baseName = file.name.replace(/\.pdf$/, '')
-    const possibleJsonNames = [
-      `${baseName}_analysis.json`,
-      `${baseName} 1_analysis.json`,
-      `${baseName.replace(/\s*\(\d+\)$/, '')} 1_analysis.json`,
-      `${baseName.replace(/\s*\(\d+\)$/, '')}_analysis.json`
-    ]
-
-    console.log('Processing PDF:', file.name, '-> trying JSON names:', possibleJsonNames)
-
-    let jsonData = null
-    let jsonFileName = null
-
-    for (const name of possibleJsonNames) {
-      try {
-        console.log('Trying to fetch:', `/pdfs/${name}`)
-        const response = await fetch(`/pdfs/${name}`)
-        if (response.ok) {
-          jsonData = await response.json()
-          jsonFileName = name
-          console.log('Successfully loaded JSON from:', name)
-          break
-        } else {
-          console.log('Not found:', name, 'status:', response.status)
-        }
-      } catch (error) {
-        console.log('Error fetching:', name, error)
-      }
+    // Handle different naming patterns
+    let jsonFileName = file.name.replace(/\.pdf$/, '_analysis.json')
+    
+    // Special case: if the PDF is "SAKTHI--S.pdf", look for "SAKTHI--S 1_analysis 1.json"
+    if (file.name === 'SAKTHI--S.pdf') {
+      jsonFileName = 'SAKTHI--S 1_analysis 1.json'
     }
+    
+    console.log('Processing PDF:', file.name, '-> JSON:', jsonFileName)
+    try {
+      const response = await fetch(`/pdfs/${jsonFileName}`)
+      console.log('Fetch response status:', response.status, 'for URL:', `/pdfs/${jsonFileName}`)
+      if (response.ok) {
+        const jsonData = await response.json()
+        console.log('Loaded JSON data:', jsonData)
+        setProcessedData(prev => ({ ...prev, [file.id]: jsonData }))
+        // Also save to IndexedDB
+        fileDB.storeJsonData(file.id, jsonData).catch(error => {
+          console.error('Failed to save JSON data to IndexedDB:', error)
+        })
 
-    if (jsonData) {
-      setProcessedData(prev => ({ ...prev, [file.id]: jsonData }))
-      // Also save to IndexedDB
-      fileDB.storeJsonData(file.id, jsonData).catch(error => {
-        console.error('Failed to save JSON data to IndexedDB:', error)
-      })
+        // Create a virtual JSON file entry and select it
+        const virtualJsonFile = {
+          id: `${file.id}_analysis`,
+          name: jsonFileName,
+          type: 'application/json'
+        }
+        setJsonData(jsonData)
+        setSelectedFile(virtualJsonFile)
 
-      // Create a virtual JSON file entry and select it
-      const virtualJsonFile = {
-        id: `${file.id}_analysis`,
-        name: jsonFileName,
-        type: 'application/json'
+        toast.success('PDF processed successfully')
+      } else {
+        toast.error(`Analysis JSON file not found: ${jsonFileName}`)
       }
-      setJsonData(jsonData)
-      setSelectedFile(virtualJsonFile)
-
-      toast.success('PDF processed successfully')
-    } else {
-      toast.error('Analysis JSON file not found. Tried: ' + possibleJsonNames.join(', '))
+    } catch (error) {
+      console.error('Error loading analysis JSON:', error)
+      toast.error('Error processing PDF')
     }
   }
 
@@ -689,7 +690,7 @@ function App() {
             <div className="controls">
               {/* Project Name Header inside controls */}
               {currentProject && (
-                <div className="project-header" style={{padding: '8px 0', fontSize: '1.2rem', fontWeight: 'bold', textAlign: 'center', borderBottom: '1px solid #222', marginBottom: '8px'}}>
+                <div className="project-header" style={{padding: '5px 0', fontSize: '1.2rem', fontWeight: 'bold', textAlign: 'center', borderBottom: '1px solid #222', marginBottom: '8px'}}>
                   {currentProject.name}
                 </div>
               )}
@@ -707,6 +708,7 @@ function App() {
                     <FileViewer 
                       pdfUrl={pdfUrl} 
                       highlightedText={highlightedText}
+                      highlightedField={highlightedField}
                       pdfTextContent={pdfTextContent}
                       onTextSelect={(selectedText) => {
                         setHighlightedText(selectedText)
@@ -716,6 +718,7 @@ function App() {
                     <FileViewer 
                       pdfUrl={pdfUrl} 
                       highlightedText={highlightedText}
+                      highlightedField={highlightedField}
                       pdfTextContent={pdfTextContent}
                       onTextSelect={(selectedText) => {
                         setHighlightedText(selectedText)
