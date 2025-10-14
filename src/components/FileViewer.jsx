@@ -283,13 +283,12 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
       const ctx = contexts[pageIndex];
       const viewport = viewports[pageIndex];
       
-      // Convert bbox coordinates to canvas coordinates
-      // PDF coordinates are typically from bottom-left, canvas is from top-left
-      const scale = viewport.scale || 1.5;
+      // Apply the same scale used for PDF rendering (1.5) to bbox coordinates
+      const scale = 1.5;
       const x1 = bbox.x1 * scale;
-      const y1 = viewport.height - (bbox.y2 * scale); // Flip Y coordinate
+      const y1 = bbox.y1 * scale;
       const x2 = bbox.x2 * scale;
-      const y2 = viewport.height - (bbox.y1 * scale); // Flip Y coordinate
+      const y2 = bbox.y2 * scale;
 
       // Draw red rectangle
       ctx.save();
@@ -307,7 +306,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         }, 100);
       }
 
-      console.log(`Highlighted field on page ${page} with bbox:`, bbox);
+      console.log(`Highlighted field on page ${page} using bbox directly:`, bbox);
     };
 
     highlightFieldBbox();
