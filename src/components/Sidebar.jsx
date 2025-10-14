@@ -158,7 +158,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
   return (
     <div className="sidebar-content">
       <div className="sidebar-toggle" style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px'}}>
-        {!collapsed && onBackToLanding && (
+        {onBackToLanding && (
           <button
             className="sidebar-toggle-btn sidebar-back-btn"
             onClick={onBackToLanding}
@@ -195,7 +195,9 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
           title={collapsed ? 'Show sidebar' : 'Hide sidebar'}
           style={{marginLeft: 'auto'}}
         >
-          {collapsed ? <Menu size={16} /> : <X size={16} />}
+          <span style={{color: '#fff', fontSize: '16px', fontWeight: 'bold'}}>
+            {collapsed ? '☰' : '✕'}
+          </span>
         </button>
       </div>
       {!collapsed && (
@@ -248,8 +250,8 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                                     toast.loading('Processing PDF with MosaicML...', { id: 'process1' });
                                     const response = await axios.post('/mosaicml', formData, {
                                       headers: {
-                                        'Content-Type': 'multipart/form-data',
                                       },
+                                        'Content-Type': 'multipart/form-data',
                                     });
                                     toast.success('PDF processed successfully with MosaicML!', { id: 'process1' });
                                     console.log('MosaicML response:', response.data);

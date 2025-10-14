@@ -176,8 +176,8 @@
 }
 
 .project-card:hover {
-  background-color: #444;
-  border-color: #0064fa;
+  background-color: #3b3b3b;
+  border-color: #474747;
 }
 
 .project-card h3 {

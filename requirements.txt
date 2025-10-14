@@ -1,0 +1,40 @@
+# DOC-UI Project Dependencies
+# This file lists all the npm packages required to run the DOC-UI application
+
+# Core React Dependencies
+react==19.1.1
+react-dom==19.1.1
+
+# Routing
+react-router-dom==7.9.4
+
+# PDF Processing
+pdfjs-dist==5.4.296
+react-pdf==10.1.0
+
+# UI Components and Utilities
+lucide-react==0.545.0
+react-hot-toast==2.6.0
+react-dropzone==14.3.8
+
+# HTTP Client
+axios==1.12.2
+
+# Data Export
+xlsx==0.18.5
+
+# Development Dependencies
+@vitejs/plugin-react==5.0.4
+@vite/plugin-react==5.0.4
+vite==7.1.7
+eslint==9.36.0
+@eslint/js==9.36.0
+eslint-plugin-react-hooks==5.2.0
+eslint-plugin-react-refresh==0.4.22
+globals==16.4.0
+
+# Installation Instructions:
+# 1. Make sure you have Node.js installed (version 16 or higher)
+# 2. Run: npm install
+# 3. Or install specific packages: npm install <package-name>
+# 4. Start development server: npm run dev

@@ -1,30 +1,71 @@
-# React + JavaScript + Vite
+# DOC-UI
 
-A comprehensive PDF document processing UI built with React and Vite, featuring advanced text extraction, form generation, and persistent storage capabilities.
+A comprehensive PDF document processing and form management application built with React, featuring advanced AI-powered text extraction, dynamic form generation, and intelligent data processing capabilities.
 
-## Features
+## 🚀 Features
 
-- **PDF Processing**: Upload and process PDF documents with automatic text extraction
-- **Dynamic Form Generation**: Convert extracted JSON data into interactive, editable forms
-- **Advanced Text Search**: Click on form fields to highlight corresponding text in PDFs using bounding boxes
-- **Persistent Storage**: Save processed data using IndexedDB for offline access
-- **JSON Editing**: Edit extracted data in both form and raw JSON views
-- **Export Functionality**: Export processed data to JSON or Excel formats
-- **File Management**: Organize PDFs and JSON files in a folder-based structure
+### Core Functionality
+- **PDF Processing**: Upload and process PDF documents with automatic text extraction using PDF.js
+- **AI-Powered Analysis**: Send PDFs to backend APIs for advanced processing (MosaicML and LLM integration)
+- **Dynamic Form Generation**: Convert extracted JSON data into interactive, editable forms with confidence scoring
+- **Smart Text Highlighting**: Click on form fields to highlight corresponding text in PDFs using bounding box coordinates
+- **Persistent Storage**: Save processed data using IndexedDB for offline access and project management
 
-## Tech Stack
+### Advanced Features
+- **Project Management**: Create and manage multiple projects with organized folder structures
+- **File Organization**: Hierarchical folder system for managing PDFs and JSON files
+- **Real-time Form Editing**: Edit extracted data in both structured form view and raw JSON editor
+- **Confidence Indicators**: Visual confidence scoring for extracted form fields with color-coded indicators
+- **Export Capabilities**: Export processed data to JSON or Excel formats
+- **Responsive Design**: Clean, modern UI that works across all devices
 
-- **React 19** - Modern React with hooks and concurrent features
-- **Vite** - Fast build tool with hot module replacement
-- **PDF.js** - Client-side PDF processing and text extraction
-- **IndexedDB** - Browser-based persistent storage
-- **React PDF** - PDF rendering and display
-- **XLSX** - Excel file generation
-- **React Dropzone** - Drag-and-drop file uploads
+### API Integration
+- **MosaicML Processing**: Send PDFs to `/mosaicml` endpoint for advanced document analysis
+- **LLM Processing**: Send PDFs to `/llm` endpoint for AI-powered text processing
+- **RESTful API Ready**: Built for easy backend integration with configurable endpoints
 
-## Getting Started
+## 🛠️ Tech Stack
+
+- **Frontend**: React 19 with modern hooks and concurrent features
+- **Build Tool**: Vite with hot module replacement
+- **PDF Processing**: PDF.js for client-side PDF parsing and text extraction
+- **Storage**: IndexedDB for persistent browser-based storage
+- **UI Components**: Custom responsive design with CSS
+- **File Handling**: React Dropzone for drag-and-drop uploads
+- **Data Export**: XLSX library for Excel file generation
+- **Icons**: Lucide React for consistent iconography
+- **Notifications**: React Hot Toast for user feedback
+
+## 📁 Project Structure
+
+```
+src/
+├── components/
+│   ├── App.jsx              # Main application orchestrator
+│   ├── Sidebar.jsx          # File management and project navigation
+│   ├── FileViewer.jsx       # PDF display with text highlighting
+│   ├── JsonForm.jsx         # Dynamic form generation and editing
+│   ├── LandingPage.jsx      # Project selection and management
+│   └── LandingPage.css      # Landing page styles
+├── utils/
+│   ├── db.js               # IndexedDB utilities for file storage
+│   └── projectDB.js        # Project management database
+└── assets/                 # Static assets
+```
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v16 or higher)
+- npm or yarn
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone <repository-url>
+cd DOC-UI
+
 # Install dependencies
 npm install
 
@@ -38,109 +79,59 @@ npm run build
 npm run preview
 ```
 
-## Project Structure
+### Backend Integration
 
-```
-src/
-├── components/
-│   ├── App.jsx          # Main application component
-│   ├── FileViewer.jsx   # PDF display with text highlighting
-│   ├── JsonForm.jsx     # Dynamic form generation and editing
-│   └── Sidebar.jsx      # File management interface
-├── utils/
-│   └── db.js           # IndexedDB utilities
-└── assets/             # Static assets
-```
+The application is designed to work with backend APIs for PDF processing:
 
-Currently, two official plugins are available:
+```javascript
+// Example API endpoints expected:
+POST /mosaicml  // For MosaicML processing
+POST /llm       // For LLM processing
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown-vite)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).vaScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{js,jsx}'],
-    extends: [
-      // Other configs...
-
-      // Add recommended React rules
-      'plugin:react/recommended',
-      'plugin:react-hooks/recommended',
-
-      // Other configs...
-    ],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        window: 'readonly',
-        document: 'readonly',
-        console: 'readonly',
-        // Add other globals as needed
-      },
-    },
-  },
-])
+// Request format:
+{
+  file: PDF_Blob,
+  filename: "document.pdf"
+}
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🎯 Usage
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1. **Create Project**: Start by creating a new project from the landing page
+2. **Upload PDFs**: Drag and drop PDF files into folders within your project
+3. **Process Documents**: Use the process buttons (yellow/orange for MosaicML, green for LLM) to analyze PDFs
+4. **Edit Forms**: Modify extracted data in the interactive form interface
+5. **Search & Highlight**: Click on form fields to highlight corresponding text in the PDF
+6. **Export Data**: Save processed data as JSON or Excel files
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{js,jsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs.recommended,
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true,
-        },
-      },
-      globals: {
-        window: 'readonly',
-        document: 'readonly',
-        console: 'readonly',
-      },
-    },
-  },
-])
+## 🔧 Configuration
+
+### Environment Variables
+Create a `.env` file for API configuration:
+
+```env
+VITE_API_BASE_URL=http://localhost:3000
+VITE_MOSAICML_ENDPOINT=/mosaicml
+VITE_LLM_ENDPOINT=/llm
 ```
+
+### Build Configuration
+The project uses Vite for building. Configuration can be found in `vite.config.ts`.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgments
+
+- PDF.js for excellent PDF processing capabilities
+- React ecosystem for robust frontend development
+- Vite for lightning-fast development experience
