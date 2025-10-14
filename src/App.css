@@ -868,15 +868,33 @@ mark {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
+    width: 100%;
   }
-  
+
   .field-label-container {
     width: 100%;
     min-width: unset;
     max-width: unset;
   }
-  
+
   .field-input {
+    width: 100%;
+  }
+
+  .field {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .field label {
+    width: 100%;
+    min-width: unset;
+    max-width: unset;
+    padding-top: 0;
+  }
+
+  .field input {
     width: 100%;
   }
 }
@@ -940,23 +958,28 @@ mark {
   margin-bottom: 12px;
   align-items: flex-start;
   gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .field label {
-  min-width: 180px;
-  max-width: 250px;
+  min-width: 150px;
+  max-width: 200px;
   word-wrap: break-word;
   word-break: break-word;
   flex-shrink: 0;
   padding-top: 8px;
+  box-sizing: border-box;
 }
 
 .field input {
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
   padding: 4px;
   background-color: #333;
   border: 1px solid #555;
   color: #fff;
+  box-sizing: border-box;
 }
 
 .object-field {
@@ -1236,45 +1259,36 @@ mark {
 
 .form-field-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 8px;
   background-color: #222;
   border-radius: 4px;
   border: 1px solid #333;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .field-label-container {
   display: flex;
   flex-direction: column;
-  min-width: 200px;
-  max-width: 300px;
+  min-width: 180px;
+  max-width: 250px;
   flex-shrink: 0;
-}
-
-.field-label-text {
   word-wrap: break-word;
-  word-break: break-word;
-  font-weight: 500;
-  color: #e6e6e6;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.confidence-indicator {
-  font-size: 12px;
-  font-weight: 500;
-  opacity: 0.9;
+  overflow-wrap: break-word;
 }
 
 .field-input {
   flex: 1;
+  min-width: 0; /* Allow flex item to shrink below content size */
   padding: 8px;
   background-color: #333;
   border: 1px solid #555;
   color: #fff;
   border-radius: 4px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .field-input:focus {

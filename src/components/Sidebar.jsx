@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, FolderIcon, FileIcon, Plus, Trash2, Upload, 
 import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { fileDB } from '../utils/db'
+import axios from 'axios'
 
 const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse, onFileDelete, onBackToLanding, currentProject, onProcessFile }) => {
   // Persist folders/files to projectDB whenever they change
@@ -236,10 +237,28 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                               className="sidebar-action-btn"
                               title="Process PDF (Method 1)"
                               style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#ffc017', color: '#000', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
-                              onClick={e => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                if (onProcessFile) {
-                                  onProcessFile(file);
+                                try {
+                                  const pdfBlob = await fileDB.getFile(file.id);
+                                  if (pdfBlob) {
+                                    const formData = new FormData();
+                                    formData.append('file', pdfBlob, file.name);
+                                    
+                                    toast.loading('Processing PDF with MosaicML...', { id: 'process1' });
+                                    const response = await axios.post('/mosaicml', formData, {
+                                      headers: {
+                                        'Content-Type': 'multipart/form-data',
+                                      },
+                                    });
+                                    toast.success('PDF processed successfully with MosaicML!', { id: 'process1' });
+                                    console.log('MosaicML response:', response.data);
+                                  } else {
+                                    toast.error('PDF file not found in database');
+                                  }
+                                } catch (error) {
+                                  console.error('Error processing PDF with MosaicML:', error);
+                                  toast.error('Failed to process PDF with MosaicML', { id: 'process1' });
                                 }
                               }}
                               onMouseOver={e => e.currentTarget.style.background = '#e6a814'}
@@ -249,10 +268,29 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                               className="sidebar-action-btn"
                               title="Process PDF (Method 2)"
                               style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#54b741', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
-                              onClick={e => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
-                                // TODO: Implement second processing method
-                                console.log('Process 2 button clicked for file:', file.name);
+                                try {
+                                  const pdfBlob = await fileDB.getFile(file.id);
+                                  if (pdfBlob) {
+                                    const formData = new FormData();
+                                    formData.append('file', pdfBlob, file.name);
+                                    
+                                    toast.loading('Processing PDF with LLM...', { id: 'process2' });
+                                    const response = await axios.post('/llm', formData, {
+                                      headers: {
+                                        'Content-Type': 'multipart/form-data',
+                                      },
+                                    });
+                                    toast.success('PDF processed successfully with LLM!', { id: 'process2' });
+                                    console.log('LLM response:', response.data);
+                                  } else {
+                                    toast.error('PDF file not found in database');
+                                  }
+                                } catch (error) {
+                                  console.error('Error processing PDF with LLM:', error);
+                                  toast.error('Failed to process PDF with LLM', { id: 'process2' });
+                                }
                               }}
                               onMouseOver={e => e.currentTarget.style.background = '#3d8b31'}
                               onMouseOut={e => e.currentTarget.style.background = '#54b741'}

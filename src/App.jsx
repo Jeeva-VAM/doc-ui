@@ -277,13 +277,26 @@ function App() {
         if (savedWidth) {
           setSidebarWidth(parseInt(savedWidth, 10))
         }
+
+        // If there's a currently loaded PDF, find it in the folders and mark it as selected
+        if (currentPdfFile) {
+          let foundFile = null;
+          for (const folder of validatedFolders || []) {
+            foundFile = folder.files.find(f => f.id === currentPdfFile.id);
+            if (foundFile) break;
+          }
+          if (foundFile) {
+            setSelectedFile(foundFile);
+            console.log(`Restored selected file: ${foundFile.name}`);
+          }
+        }
       } catch (error) {
         console.error('Failed to load persisted data:', error)
       }
     }
 
     loadPersistedData()
-  }, [])
+  }, [currentProject])
 
   useEffect(() => {
     if (!currentProject) return
@@ -310,8 +323,9 @@ function App() {
       return
     }
 
-    // If clicking on a PDF that's already loaded and displayed, don't do anything
+    // If clicking on a PDF that's already loaded and displayed, just mark it as selected without reloading
     if (file.type === 'application/pdf' && currentPdfFile && currentPdfFile.id === file.id) {
+      setSelectedFile(file) // Mark as selected for UI purposes
       return
     }
 
