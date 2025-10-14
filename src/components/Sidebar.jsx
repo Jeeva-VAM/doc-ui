@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, FolderIcon, FileIcon, Plus, Trash2, Upload, Menu, X } from 'lucide-react'
+import { ChevronDown, ChevronRight, FolderIcon, FileIcon, Plus, Trash2, Upload, Menu, X, ChevronUp } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { fileDB } from '../utils/db'
@@ -229,21 +229,35 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                       }}>
                         <FileIcon size={16} />
                         <span title={file.name}>{file.name}</span>
-                        {/* Process button for PDFs */}
+                        {/* Process buttons for PDFs */}
                         {file.type === 'application/pdf' && (
-                          <button
-                            className="sidebar-action-btn"
-                            title="Process PDF"
-                            style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#ffc017', color: '#000', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
-                            onClick={e => {
-                              e.stopPropagation();
-                              if (onProcessFile) {
-                                onProcessFile(file);
-                              }
-                            }}
-                            onMouseOver={e => e.currentTarget.style.background = '#e6a814'}
-                            onMouseOut={e => e.currentTarget.style.background = '#ffc017'}
-                          >Process</button>
+                          <>
+                            <button
+                              className="sidebar-action-btn"
+                              title="Process PDF (Method 1)"
+                              style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#ffc017', color: '#000', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
+                              onClick={e => {
+                                e.stopPropagation();
+                                if (onProcessFile) {
+                                  onProcessFile(file);
+                                }
+                              }}
+                              onMouseOver={e => e.currentTarget.style.background = '#e6a814'}
+                              onMouseOut={e => e.currentTarget.style.background = '#ffc017'}
+                            ><ChevronUp size={14} /></button>
+                            <button
+                              className="sidebar-action-btn"
+                              title="Process PDF (Method 2)"
+                              style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#54b741', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
+                              onClick={e => {
+                                e.stopPropagation();
+                                // TODO: Implement second processing method
+                                console.log('Process 2 button clicked for file:', file.name);
+                              }}
+                              onMouseOver={e => e.currentTarget.style.background = '#3d8b31'}
+                              onMouseOut={e => e.currentTarget.style.background = '#54b741'}
+                            ><ChevronUp size={14} /></button>
+                          </>
                         )}
                         <button
                           className="sidebar-action-btn"

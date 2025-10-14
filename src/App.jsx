@@ -37,6 +37,7 @@ function App() {
   const [pdfTextContent, setPdfTextContent] = useState([])
   const [highlightedText, setHighlightedText] = useState('')
   const [highlightedField, setHighlightedField] = useState(null) // For bbox highlighting
+  const [currentPdfFile, setCurrentPdfFile] = useState(null) // Track currently loaded PDF file
   const navigate = useNavigate();
 
   // Extract text from PDF
@@ -195,6 +196,7 @@ function App() {
     setJsonData(null)
     setPdfTextContent([])
     setHighlightedText('')
+    setCurrentPdfFile(null) // Reset the current PDF file
   }
 
   useEffect(() => {
@@ -308,6 +310,11 @@ function App() {
       return
     }
 
+    // If clicking on a PDF that's already loaded and displayed, don't do anything
+    if (file.type === 'application/pdf' && currentPdfFile && currentPdfFile.id === file.id) {
+      return
+    }
+
     setSelectedFile(file)
     if (file.type === 'application/pdf') {
       // Load PDF for viewing in panel-left, clear JSON
@@ -345,6 +352,7 @@ function App() {
       console.log('Clearing PDF URL since PDF file was deleted')
       URL.revokeObjectURL(pdfUrl)
       setPdfUrl(null)
+      setCurrentPdfFile(null) // Clear the current PDF file reference
     }
 
     // Clear JSON data only if the deleted file was a JSON file
@@ -413,6 +421,7 @@ function App() {
         const newUrl = URL.createObjectURL(blob)
         console.log('Created new URL:', newUrl)
         setPdfUrl(newUrl)
+        setCurrentPdfFile(file) // Track the currently loaded PDF file
         
         // Extract text from PDF for search functionality
         await extractTextFromPdf(blob)
@@ -695,7 +704,6 @@ function App() {
                 </div>
               )}
               {selectedFile && <div className="selected-file">{selectedFile.type === 'application/pdf' ? 'PDF' : 'JSON'}: {selectedFile.name}</div>}
-              {selectedFile && selectedFile.type === 'application/pdf' && !!(processedData[selectedFile.id]) && <button onClick={handleViewResult}>View Result</button>}
             </div>
             <div className="content">
               <div className="split-panel">
