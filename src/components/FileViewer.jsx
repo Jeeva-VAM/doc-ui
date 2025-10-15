@@ -118,9 +118,10 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         setIsLoading(false);
 
         // Report the display width of the first page to parent component
-        if (newScales.length > 0 && onPageWidthChange) {
-          const firstPageWidth = pageWidth * newScales[0];
-          onPageWidthChange(firstPageWidth);
+        if (newScales.length > 0 && onPageWidthChange && newViewports.length > 0) {
+          const firstPageWidth = newViewports[0].width / newViewports[0].scale;
+          const firstPageDisplayWidth = firstPageWidth * newScales[0];
+          onPageWidthChange(firstPageDisplayWidth);
         }
       } catch (error) {
         console.error('Error loading PDF:', error);
@@ -130,28 +131,40 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
     };
 
     loadPdf();
-  }, [pdfUrl, containerWidth]);
+  }, [pdfUrl]);
 
-  // Handle zoom changes by scaling existing canvases
+  // Handle zoom and container width changes by scaling existing canvases
   useEffect(() => {
-    if (!canvases.length || !scales.length) return;
+    if (!canvases.length || !pages.length) return;
 
     canvases.forEach((canvas, i) => {
-      const originalScale = scales[i];
-      const zoomScale = originalScale * zoomLevel;
+      const page = pages[i];
+      const viewport = page.getViewport({ scale: 1.0 });
+      const pageWidth = viewport.width;
+      const pageHeight = viewport.height;
+
+      // Get container dimensions for scaling
+      const container = fileViewerRef.current?.querySelector('.pdf-container');
+      const currentContainerWidth = container ? container.clientWidth : containerWidth || 800;
+      const currentContainerHeight = container ? container.clientHeight : 600;
+
+      // Recalculate scale based on current container dimensions
+      const scaleX = currentContainerWidth / pageWidth;
+      const scaleY = currentContainerHeight / pageHeight;
       
-      // Calculate new display dimensions maintaining aspect ratio
-      const pageWidth = viewports[i].width / viewports[i].scale; // Get original page width
-      const pageHeight = viewports[i].height / viewports[i].scale; // Get original page height
-      
-      const displayWidth = pageWidth * zoomScale;
-      const displayHeight = pageHeight * zoomScale; // Scale height proportionally to maintain aspect ratio
+      const isConstrainedWidth = currentContainerWidth <= 400;
+      const fitScale = isConstrainedWidth 
+        ? Math.min(scaleX, 455 / pageHeight, 3.0) * zoomLevel
+        : Math.min(455 / pageHeight, scaleX, 3.0) * zoomLevel;
+
+      const displayWidth = pageWidth * fitScale;
+      const displayHeight = pageHeight * fitScale; // Maintain aspect ratio
       
       // Update canvas CSS dimensions
       canvas.style.width = `${displayWidth}px`;
       canvas.style.height = `${displayHeight}px`;
     });
-  }, [zoomLevel, canvases, scales, viewports]);
+  }, [zoomLevel, containerWidth, canvases, pages]);
 
   // Highlight helper function
   const highlightBox = (ctx, rect) => {

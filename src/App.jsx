@@ -469,10 +469,6 @@ function App() {
       console.log('Retrieved blob:', blob)
       if (blob) {
         console.log('Blob size:', blob.size, 'type:', blob.type)
-        if (pdfUrl) {
-          console.log('Revoking previous URL:', pdfUrl)
-          URL.revokeObjectURL(pdfUrl)
-        }
         const newUrl = URL.createObjectURL(blob)
         console.log('Created new URL:', newUrl)
         setPdfUrl(newUrl)
