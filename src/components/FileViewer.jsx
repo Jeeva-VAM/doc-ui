@@ -130,7 +130,28 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
     };
 
     loadPdf();
-  }, [pdfUrl, zoomLevel, containerWidth]);
+  }, [pdfUrl, containerWidth]);
+
+  // Handle zoom changes by scaling existing canvases
+  useEffect(() => {
+    if (!canvases.length || !scales.length) return;
+
+    canvases.forEach((canvas, i) => {
+      const originalScale = scales[i];
+      const zoomScale = originalScale * zoomLevel;
+      
+      // Calculate new display dimensions maintaining aspect ratio
+      const pageWidth = viewports[i].width / viewports[i].scale; // Get original page width
+      const pageHeight = viewports[i].height / viewports[i].scale; // Get original page height
+      
+      const displayWidth = pageWidth * zoomScale;
+      const displayHeight = pageHeight * zoomScale; // Scale height proportionally to maintain aspect ratio
+      
+      // Update canvas CSS dimensions
+      canvas.style.width = `${displayWidth}px`;
+      canvas.style.height = `${displayHeight}px`;
+    });
+  }, [zoomLevel, canvases, scales, viewports]);
 
   // Highlight helper function
   const highlightBox = (ctx, rect) => {
