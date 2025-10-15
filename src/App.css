@@ -25,7 +25,7 @@
   .controls {
     flex-direction: column;
     gap: 8px;
-    padding: 8px;
+    padding: 1px;
   }
   .folders-list {
     flex-direction: row;
@@ -404,7 +404,7 @@
 }
 
 .controls {
-  padding: 10px;
+  /* padding: 2px; */
   background-color: #111;
   border-bottom: 1px solid #333;
   display: flex;
@@ -447,6 +447,7 @@
   min-width: 0; /* Prevent flex items from overflowing */
   display: flex;
   flex-direction: column;
+  transition: width 0.2s ease-in-out; /* Smooth width transitions */
 }
 
 .panel-right {
@@ -471,6 +472,7 @@
   overflow: hidden;
   min-height: 0; /* Allow flex item to shrink */
   position: relative;
+  transition: width 0.2s ease-in-out; /* Smooth width transitions */
 }
 
 .pdf-container {
@@ -483,6 +485,7 @@
   display: flex;
   flex-direction: column;
   align-items: center; /* Center content horizontally */
+  transition: width 0.2s ease-in-out; /* Smooth width transitions */
 }
 
 .pdf-page-container {
@@ -503,6 +506,7 @@
   image-rendering: crisp-edges;
   image-rendering: pixelated;
   image-rendering: auto;
+  transition: width 0.2s ease-in-out, height 0.2s ease-in-out; /* Smooth scaling transitions */
 }
 
 .pdf-page {
@@ -542,7 +546,7 @@
   width: 24px;
   height: 24px;
   border: none;
-  border-radius: 50%;
+  border-radius: 10%;
   background-color: #666;
   color: white;
   font-size: 14px;
@@ -557,7 +561,7 @@
 
 .zoom-btn:hover {
   background-color: #555;
-  transform: translateY(-1px);
+  /* transform: translateY(-1px); */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -574,6 +578,46 @@
   min-width: 35px;
   text-align: center;
   user-select: none;
+}
+
+.page-indicator {
+  font-size: 12px;
+  font-weight: 500;
+  color: #666;
+  min-width: 45px;
+  text-align: center;
+  user-select: none;
+}
+
+.zoom-separator {
+  width: 1px;
+  height: 16px;
+  background-color: rgba(0, 0, 0, 0.2);
+  margin: 0 4px;
+}
+
+.reset-btn {
+  background-color: #28a745 !important;
+}
+
+.reset-btn:hover {
+  background-color: #218838 !important;
+}
+
+.reset-btn:active {
+  background-color: #1e7e34 !important;
+}
+
+.zoom-btn:disabled {
+  background-color: #ccc !important;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.zoom-btn:disabled:hover {
+  background-color: #ccc !important;
+  transform: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .pdf-text-layer > div {
@@ -1532,4 +1576,66 @@ mark {
 
 .cancel-btn:active {
   background: rgba(220, 53, 69, 1);
+}
+
+/* Dropdown Menu Styles */
+.dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-toggle {
+  background: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.dropdown-toggle:hover {
+  background-color: #f8f9fa;
+  border-color: #999;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 140px;
+  margin-top: 2px;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  color: #333;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+}
+
+.dropdown-item:first-child {
+  border-radius: 4px 4px 0 0;
+}
+
+.dropdown-item:last-child {
+  border-radius: 0 0 4px 4px;
 }

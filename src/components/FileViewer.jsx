@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { pdfjs } from 'react-pdf';
 
-// Set worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// PDF.js worker is configured globally in main.jsx
 
 const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent, onTextSelect, onPageWidthChange, containerWidth }) => {
   const [selectedText, setSelectedText] = useState('');
@@ -19,6 +18,8 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   const [scales, setScales] = useState([]);
   const [pdfDoc, setPdfDoc] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1.0); // Add zoom level state
+  const [loadingPdfUrl, setLoadingPdfUrl] = useState(null); // Track currently loading PDF URL
+  const [currentPage, setCurrentPage] = useState(1); // Track current page for navigation
   const fileViewerRef = useRef(null);
 
   // Zoom functions
@@ -30,9 +31,23 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
     setZoomLevel(prev => Math.max(prev / 1.2, 0.5)); // Min 0.5x zoom
   };
 
+  const resetZoom = () => {
+    setZoomLevel(1.0); // Reset to 100%
+  };
+
+  const goToPrevPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const goToNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, numPages || 1));
+  };
+
   // Load PDF and render to canvases
   useEffect(() => {
-    if (!pdfUrl) return;
+    if (!pdfUrl || loadingPdfUrl === pdfUrl) return;
+
+    setLoadingPdfUrl(pdfUrl);
 
     const loadPdf = async () => {
       try {
@@ -116,6 +131,8 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         setScales(newScales);
         setNumPages(numPages);
         setIsLoading(false);
+        setLoadingPdfUrl(null); // Clear loading state
+        setCurrentPage(1); // Reset to first page when new PDF loads
 
         // Report the display width of the first page to parent component
         if (newScales.length > 0 && onPageWidthChange && newViewports.length > 0) {
@@ -126,6 +143,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
       } catch (error) {
         console.error('Error loading PDF:', error);
         setIsLoading(false);
+        setLoadingPdfUrl(null); // Clear loading state on error
         toast.error('Failed to load PDF');
       }
     };
@@ -134,39 +152,55 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   }, [pdfUrl]);
 
   // Handle zoom and container width changes by scaling existing canvases
+  const [lastContainerWidth, setLastContainerWidth] = useState(containerWidth);
+
   useEffect(() => {
     if (!canvases.length || !pages.length) return;
 
-    canvases.forEach((canvas, i) => {
-      const page = pages[i];
-      const viewport = page.getViewport({ scale: 1.0 });
-      const pageWidth = viewport.width;
-      const pageHeight = viewport.height;
+    const scaleCanvases = () => {
+      canvases.forEach((canvas, i) => {
+        const page = pages[i];
+        const viewport = page.getViewport({ scale: 1.0 });
+        const pageWidth = viewport.width;
+        const pageHeight = viewport.height;
 
-      // Get container dimensions for scaling
-      const container = fileViewerRef.current?.querySelector('.pdf-container');
-      const currentContainerWidth = container ? container.clientWidth : containerWidth || 800;
-      const currentContainerHeight = container ? container.clientHeight : 600;
+        // Get container dimensions for scaling
+        const container = fileViewerRef.current?.querySelector('.pdf-container');
+        const currentContainerWidth = container ? container.clientWidth : containerWidth || 800;
+        const currentContainerHeight = container ? container.clientHeight : 600;
 
-      // Recalculate scale based on current container dimensions
-      const scaleX = currentContainerWidth / pageWidth;
-      const scaleY = currentContainerHeight / pageHeight;
-      
-      const isConstrainedWidth = currentContainerWidth <= 400;
-      const fitScale = isConstrainedWidth 
-        ? Math.min(scaleX, 455 / pageHeight, 3.0) * zoomLevel
-        : Math.min(455 / pageHeight, scaleX, 3.0) * zoomLevel;
+        // Recalculate scale based on current container dimensions
+        const scaleX = currentContainerWidth / pageWidth;
+        const scaleY = currentContainerHeight / pageHeight;
 
-      const displayWidth = pageWidth * fitScale;
-      const displayHeight = pageHeight * fitScale; // Maintain aspect ratio
-      
-      // Update canvas CSS dimensions
-      canvas.style.width = `${displayWidth}px`;
-      canvas.style.height = `${displayHeight}px`;
-    });
-  }, [zoomLevel, containerWidth, canvases, pages]);
+        const isConstrainedWidth = currentContainerWidth <= 400;
+        const fitScale = isConstrainedWidth
+          ? Math.min(scaleX, 455 / pageHeight, 3.0) * zoomLevel
+          : Math.min(455 / pageHeight, scaleX, 3.0) * zoomLevel;
 
-  // Highlight helper function
+        const displayWidth = pageWidth * fitScale;
+        const displayHeight = pageHeight * fitScale; // Maintain aspect ratio
+
+        // Update canvas CSS dimensions
+        canvas.style.width = `${displayWidth}px`;
+        canvas.style.height = `${displayHeight}px`;
+      });
+    };
+
+    // Check if this is a container width change (panel transition) vs zoom change
+    const isContainerWidthChange = lastContainerWidth !== containerWidth;
+
+    if (isContainerWidthChange) {
+      // Delay canvas scaling for container width changes to avoid interrupting transitions
+      requestAnimationFrame(() => {
+        setTimeout(scaleCanvases, 250);
+      });
+      setLastContainerWidth(containerWidth);
+    } else {
+      // Apply zoom changes immediately
+      scaleCanvases();
+    }
+  }, [zoomLevel, containerWidth, canvases, pages]);  // Highlight helper function
   const highlightBox = (ctx, rect) => {
     ctx.save();
     ctx.strokeStyle = 'red';
@@ -467,6 +501,26 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
     }
   };
 
+  // Scroll to current page when page changes
+  useEffect(() => {
+    if (currentPage > 0 && canvases.length > 0) {
+      const container = fileViewerRef.current?.querySelector('.pdf-container');
+      if (container) {
+        const pageIndex = currentPage - 1;
+        const targetCanvas = canvases[pageIndex];
+        if (targetCanvas) {
+          const canvasRect = targetCanvas.getBoundingClientRect();
+          const containerRect = container.getBoundingClientRect();
+          const scrollTop = container.scrollTop + canvasRect.top - containerRect.top;
+          container.scrollTo({
+            top: scrollTop,
+            behavior: 'smooth'
+          });
+        }
+      }
+    }
+  }, [currentPage, canvases]);
+
   return (
     <div className="file-viewer" ref={fileViewerRef} style={containerWidth ? { width: `${containerWidth}px`, margin: '0 auto' } : {}}>
       {pdfUrl ? (
@@ -480,9 +534,14 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
             {/* Canvases are dynamically added here */}
           </div>
           <div className="zoom-controls">
+            <button onClick={goToPrevPage} className="zoom-btn" title="Previous Page" disabled={currentPage <= 1}>‹</button>
+            <span className="page-indicator">{currentPage} / {numPages || 1}</span>
+            <button onClick={goToNextPage} className="zoom-btn" title="Next Page" disabled={currentPage >= (numPages || 1)}>›</button>
+            <div className="zoom-separator"></div>
             <button onClick={zoomOut} className="zoom-btn" title="Zoom Out">−</button>
             <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
             <button onClick={zoomIn} className="zoom-btn" title="Zoom In">+</button>
+            <button onClick={resetZoom} className="zoom-btn reset-btn" title="Reset Zoom">↻</button>
           </div>
           {totalMatches > 0 && (
             <div className="search-bar">

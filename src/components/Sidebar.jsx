@@ -1,11 +1,11 @@
-import { useState } from 'react'
-import { ChevronDown, ChevronRight, FolderIcon, FileIcon, Plus, Trash2, Upload, Menu, X, ChevronUp } from 'lucide-react'
+import React, { useState } from 'react'
+import { ChevronDown, ChevronRight, FolderIcon, FileIcon, Plus, Trash2, Upload, Menu, X, ChevronUp, MoreVertical } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { useDropzone } from 'react-dropzone'
 import { fileDB } from '../utils/db'
 import axios from 'axios'
 
-const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse, onFileDelete, onBackToLanding, currentProject, onProcessFile }) => {
+const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFileSelect, selectedFileIds, collapsed = false, onToggleCollapse, onFileDelete, onBackToLanding, currentProject, onProcessFile, onExportJson, onExportExcel, hasJsonData }) => {
   // Persist folders/files to projectDB whenever they change
         const persistFoldersToDB = async (folders) => {
           if (!currentProject || !currentProject.id) return;
@@ -22,6 +22,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
   const [newFolderName, setNewFolderName] = useState('')
   const [dragOverFolder, setDragOverFolder] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ show: false, type: '', item: null, folderId: null })
+  const [showDropdown, setShowDropdown] = useState(false)
 
   const createFolder = () => {
     if (!newFolderName.trim()) return
@@ -93,6 +94,21 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
   const cancelDelete = () => {
     setDeleteModal({ show: false, type: '', item: null, folderId: null })
   }
+
+  // Close dropdown when clicking outside
+  const handleClickOutside = (event) => {
+    if (showDropdown && !event.target.closest('.sidebar-dropdown-container')) {
+      setShowDropdown(false);
+    }
+  }
+
+  // Add event listener for click outside
+  React.useEffect(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
 
   const createDropzoneConfig = (folderId) => ({
     accept: {
@@ -341,6 +357,71 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                           onMouseOver={e => e.currentTarget.style.background = '#a00'}
                           onMouseOut={e => e.currentTarget.style.background = '#222'}
                         ><Trash2 size={14} /></button>
+                        {hasJsonData && (
+                          <div className="sidebar-dropdown-container" style={{position: 'relative', display: 'inline-block'}}>
+                            <button
+                              className="sidebar-action-btn"
+                              title="More options"
+                              style={{padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#444', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
+                              onClick={(e) => { e.stopPropagation(); setShowDropdown(!showDropdown) }}
+                              onMouseOver={e => e.currentTarget.style.background = '#666'}
+                              onMouseOut={e => e.currentTarget.style.background = '#444'}
+                            ><MoreVertical size={14} /></button>
+                            {showDropdown && (
+                              <div className="sidebar-dropdown-menu" style={{
+                                position: 'absolute',
+                                top: '100%',
+                                right: '0',
+                                background: '#333',
+                                border: '1px solid #555',
+                                borderRadius: '4px',
+                                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                                zIndex: 1000,
+                                minWidth: '120px',
+                                marginTop: '2px'
+                              }}>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onExportJson(); }}
+                                  style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    padding: '6px 10px',
+                                    background: 'none',
+                                    border: 'none',
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    color: '#fff',
+                                    fontSize: '12px',
+                                    transition: 'background-color 0.2s'
+                                  }}
+                                  onMouseOver={e => e.currentTarget.style.background = '#555'}
+                                  onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Export JSON
+                                </button>
+                                <button 
+                                  onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onExportExcel(); }}
+                                  style={{
+                                    display: 'block',
+                                    width: '100%',
+                                    padding: '6px 10px',
+                                    background: 'none',
+                                    border: 'none',
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    color: '#fff',
+                                    fontSize: '12px',
+                                    transition: 'background-color 0.2s'
+                                  }}
+                                  onMouseOver={e => e.currentTarget.style.background = '#555'}
+                                  onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                                >
+                                  Export Excel
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                     <DropzoneArea folderId={folder.id} />

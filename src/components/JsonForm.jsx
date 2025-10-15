@@ -7,18 +7,6 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
   const [rawJsonText, setRawJsonText] = useState('')
   const [jsonError, setJsonError] = useState('')
 
-  // Update raw JSON text when jsonData changes
-  useEffect(() => {
-    if (jsonData) {
-      setRawJsonText(JSON.stringify(jsonData, null, 2))
-      setJsonError('')
-    } else {
-      // Initialize with empty object if no data
-      setRawJsonText('{}')
-      setJsonError('')
-    }
-  }, [jsonData])
-
   // Ensure raw JSON text is initialized when switching to JSON view
   useEffect(() => {
     if (viewMode === 'json' && !rawJsonText) {
@@ -71,63 +59,6 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
   const isEmptyValue = (value) => {
     return value === null || value === undefined || value === ''
   }
-  const handleExportJson = () => {
-    const dataStr = JSON.stringify(jsonData, null, 2)
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
-
-    const exportFileDefaultName = 'extracted-data.json'
-
-    const linkElement = document.createElement('a')
-    linkElement.setAttribute('href', dataUri)
-    linkElement.setAttribute('download', exportFileDefaultName)
-    linkElement.click()
-
-    toast.success('JSON exported successfully!')
-  }
-
-  const handleExportExcel = () => {
-    try {
-      // Flatten the JSON data for Excel export
-      const flattenObject = (obj, prefix = '') => {
-        let flattened = {}
-        
-        for (let key in obj) {
-          if (obj.hasOwnProperty(key)) {
-            let newKey = prefix ? `${prefix}.${key}` : key
-            
-            if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-              Object.assign(flattened, flattenObject(obj[key], newKey))
-            } else if (Array.isArray(obj[key])) {
-              // For arrays, create separate rows or flatten as comma-separated values
-              flattened[newKey] = obj[key].join(', ')
-            } else {
-              flattened[newKey] = obj[key]
-            }
-          }
-        }
-        
-        return flattened
-      }
-
-      const flattenedData = flattenObject(jsonData)
-      
-      // Create worksheet
-      const ws = XLSX.utils.json_to_sheet([flattenedData])
-      
-      // Create workbook
-      const wb = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(wb, ws, 'Extracted Data')
-      
-      // Generate Excel file
-      XLSX.writeFile(wb, 'extracted-data.xlsx')
-      
-      toast.success('Excel exported successfully!')
-    } catch (error) {
-      console.error('Error exporting Excel:', error)
-      toast.error('Error exporting Excel file')
-    }
-  }
-
   const updateNestedValue = (obj, path, value) => {
     if (path.length === 0) return value
     const [head, ...tail] = path
@@ -305,8 +236,6 @@ const JsonForm = ({ jsonData, setJsonData, onFieldClick }) => {
       <div className="form-header">
         <h3>Extracted Result</h3>
         <div className="form-actions">
-          <button onClick={handleExportJson} className="export-btn">Export JSON</button>
-          <button onClick={handleExportExcel} className="export-btn excel-btn">Export Excel</button>
           <button 
             onClick={() => {
               if (viewMode === 'json' && jsonError) {

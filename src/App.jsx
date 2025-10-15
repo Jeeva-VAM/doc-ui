@@ -8,6 +8,7 @@ import JsonForm from './components/JsonForm'
 import LandingPage from './components/LandingPage'
 import { fileDB } from './utils/db'
 import { pdfjs } from 'react-pdf'
+import * as XLSX from 'xlsx'
 import './App.css'
 
 function App() {
@@ -442,6 +443,53 @@ function App() {
     }
   }
 
+  // Export functions
+  const handleExportJson = () => {
+    if (!jsonData) {
+      toast.error('No data to export')
+      return
+    }
+    const dataStr = JSON.stringify(jsonData, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr)
+
+    const exportFileDefaultName = 'extracted-data.json'
+
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+
+    toast.success('JSON exported successfully!')
+  }
+
+  const handleExportExcel = () => {
+    if (!jsonData) {
+      toast.error('No data to export')
+      return
+    }
+
+    // Flatten the JSON data for Excel export
+    const flattenObject = (obj, prefix = '') => {
+      let flattened = {}
+      for (let key in obj) {
+        if (obj[key] !== null && typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+          Object.assign(flattened, flattenObject(obj[key], prefix + key + '.'))
+        } else {
+          flattened[prefix + key] = obj[key]
+        }
+      }
+      return flattened
+    }
+
+    const flattenedData = flattenObject(jsonData)
+    const worksheet = XLSX.utils.json_to_sheet([flattenedData])
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Extracted Data')
+    XLSX.writeFile(workbook, 'extracted-data.xlsx')
+
+    toast.success('Excel exported successfully!')
+  }
+
   // Sidebar resize functionality
   const handleMouseDown = (e) => {
     setIsResizing(true)
@@ -738,6 +786,9 @@ function App() {
               onBackToLanding={handleBackToLanding}
               currentProject={currentProject}
               onProcessFile={handleProcessFile}
+              onExportJson={handleExportJson}
+              onExportExcel={handleExportExcel}
+              hasJsonData={!!jsonData}
             />
             {!sidebarCollapsed && (
               <div 
