@@ -1,0 +1,110 @@
+/* Dashboard Component Styles */
+
+.dashboard {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background-color: #000;
+  color: #fff;
+}
+
+.dashboard-tabs {
+  display: flex;
+  background-color: #111;
+  border-bottom: 1px solid #333;
+  padding: 0 20px;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 12px 32px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ccc;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease;
+  min-width: 160px;
+  text-align: center;
+  border: 1px solid #333;
+}
+
+.tab-button:hover {
+  color: #fff;
+  background-color: #292929;
+}
+
+.tab-button.active {
+  color: #0066ff;
+  border-top-color: #0064fa;
+  background-color: #000;
+}
+
+.dashboard-content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background-color: #000;
+}
+
+.extract-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.extract-content > * {
+  flex: 1;
+  overflow: hidden;
+}
+
+.panel-right, .panel-left {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.empty-panel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #111;
+  border: 1px solid #333;
+}
+
+.empty-message {
+  color: #ccc;
+  font-size: 16px;
+  text-align: center;
+  margin: 0;
+}
+
+.ba-content,
+.qa-content {
+  padding: 40px;
+  text-align: center;
+  background-color: #000;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.ba-content h2,
+.qa-content h2 {
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.ba-content p,
+.qa-content p {
+  color: #ccc;
+  font-size: 16px;
+  line-height: 1.5;
+  max-width: 600px;
+}

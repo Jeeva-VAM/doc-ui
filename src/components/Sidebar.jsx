@@ -22,7 +22,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
   const [newFolderName, setNewFolderName] = useState('')
   const [dragOverFolder, setDragOverFolder] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ show: false, type: '', item: null, folderId: null })
-  const [showDropdown, setShowDropdown] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(null) // Changed to store file ID instead of boolean
 
   const createFolder = () => {
     if (!newFolderName.trim()) return
@@ -98,7 +98,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
   // Close dropdown when clicking outside
   const handleClickOutside = (event) => {
     if (showDropdown && !event.target.closest('.sidebar-dropdown-container')) {
-      setShowDropdown(false);
+      setShowDropdown(null);
     }
   }
 
@@ -362,12 +362,12 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                             <button
                               className="sidebar-action-btn"
                               title="More options"
-                              style={{padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#444', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
-                              onClick={(e) => { e.stopPropagation(); setShowDropdown(!showDropdown) }}
+                              style={{padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: ' #343434', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
+                              onClick={(e) => { e.stopPropagation(); setShowDropdown(showDropdown === file.id ? null : file.id) }}
                               onMouseOver={e => e.currentTarget.style.background = '#666'}
                               onMouseOut={e => e.currentTarget.style.background = '#444'}
                             ><MoreVertical size={14} /></button>
-                            {showDropdown && (
+                            {showDropdown === file.id && (
                               <div className="sidebar-dropdown-menu" style={{
                                 position: 'absolute',
                                 top: '100%',
@@ -381,7 +381,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                                 marginTop: '2px'
                               }}>
                                 <button 
-                                  onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onExportJson(); }}
+                                  onClick={(e) => { e.stopPropagation(); setShowDropdown(null); onExportJson(); }}
                                   style={{
                                     display: 'block',
                                     width: '100%',
@@ -400,7 +400,7 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                                   Export JSON
                                 </button>
                                 <button 
-                                  onClick={(e) => { e.stopPropagation(); setShowDropdown(false); onExportExcel(); }}
+                                  onClick={(e) => { e.stopPropagation(); setShowDropdown(null); onExportExcel(); }}
                                   style={{
                                     display: 'block',
                                     width: '100%',

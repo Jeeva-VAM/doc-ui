@@ -6,6 +6,7 @@ import Sidebar from './components/Sidebar'
 import FileViewer from './components/FileViewer'
 import JsonForm from './components/JsonForm'
 import LandingPage from './components/LandingPage'
+import Dashboard from './components/Dashboard'
 import { fileDB } from './utils/db'
 import { pdfjs } from 'react-pdf'
 import * as XLSX from 'xlsx'
@@ -808,99 +809,33 @@ function App() {
               {selectedFile && <div className="selected-file">{selectedFile.type === 'application/pdf' ? 'PDF' : 'JSON'}: {selectedFile.name}</div>}
             </div>
             <div className="content">
-              <div className="split-panel">
-                <div className="panel-right" style={panelRightWidth ? { width: `${panelRightWidth}px`, flex: 'none' } : {}}>
-                  {!selectedFile ? (
-                    <div className="empty-panel">
-                      <p className="empty-message"></p>
-                    </div>
-                  ) : selectedFile.type === 'application/pdf' && jsonData ? (
-                    <FileViewer 
-                      pdfUrl={pdfUrl} 
-                      highlightedText={highlightedText}
-                      highlightedField={highlightedField}
-                      pdfTextContent={pdfTextContent}
-                      onTextSelect={(selectedText) => {
-                        setHighlightedText(selectedText)
-                      }}
-                      onPageWidthChange={setPanelRightWidth}
-                      containerWidth={panelRightWidth}
-                    />
-                  ) : selectedFile.type === 'application/json' && pdfUrl ? (
-                    <FileViewer 
-                      pdfUrl={pdfUrl} 
-                      highlightedText={highlightedText}
-                      highlightedField={highlightedField}
-                      pdfTextContent={pdfTextContent}
-                      onTextSelect={(selectedText) => {
-                        setHighlightedText(selectedText)
-                      }}
-                      onPageWidthChange={setPanelRightWidth}
-                      containerWidth={panelRightWidth}
-                    />
-                  ) : selectedFile.type === 'application/pdf' ? (
-                    <div className="empty-panel">
-                      <p className="empty-message">Click "Process" to view the result form</p>
-                    </div>
-                  ) : (
-                    <div className="empty-panel">
-                      <p className="empty-message"></p>
-                    </div>
-                  )}
-                </div>
-                <div className="panel-left" style={panelLeftWidth ? { width: `${panelLeftWidth}px`, flex: 'none' } : {}}>
-                  {!selectedFile ? (
-                    <div className="empty-panel">
-                      <p className="empty-message">Select a PDF file to view</p>
-                    </div>
-                  ) : selectedFile.type === 'application/pdf' && jsonData ? (
-                    <JsonForm
-                      jsonData={jsonData}
-                      setJsonData={(data) => {
-                        setJsonData(data)
-                        // Also update processedData for persistence
-                        if (selectedFile) {
-                          setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
-                          // Save to IndexedDB for permanent persistence
-                          fileDB.storeJsonData(selectedFile.id, data).catch(error => {
-                            console.error('Failed to save JSON data to IndexedDB:', error)
-                          })
-                        }
-                      }}
-                      onFieldClick={highlightTextInPdf}
-                    />
-                  ) : selectedFile.type === 'application/pdf' && pdfUrl ? (
-                    <FileViewer 
-                      pdfUrl={pdfUrl} 
-                      highlightedText={highlightedText}
-                      pdfTextContent={pdfTextContent}
-                      onTextSelect={(selectedText) => {
-                        setHighlightedText(selectedText)
-                      }}
-                    />
-                  ) : selectedFile.type === 'application/json' && jsonData && typeof jsonData === 'object' ? (
-                    <JsonForm
-                      jsonData={jsonData}
-                      setJsonData={(data) => {
-                        setJsonData(data)
-                        // Also update processedData for persistence
-                        if (selectedFile) {
-                          setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
-                          // Save to IndexedDB for permanent persistence
-                          fileDB.storeJsonData(selectedFile.id, data).catch(error => {
-                            console.error('Failed to save JSON data to IndexedDB:', error)
-                          })
-                        }
-                      }}
-                      onFieldClick={highlightTextInPdf}
-                    />
-                  ) : (
-                    <div className="empty-panel">
-                      <p className="empty-message">Select a JSON file or process a PDF to view results</p>
-                    </div>
-                  )}
-                </div>
-              </div>
+              <Dashboard
+                selectedFile={selectedFile}
+                jsonData={jsonData}
+                setJsonData={(data) => {
+                  setJsonData(data)
+                  // Also update processedData for persistence
+                  if (selectedFile) {
+                    setProcessedData(prev => ({ ...prev, [selectedFile.id]: data }))
+                    // Save to IndexedDB for permanent persistence
+                    fileDB.storeJsonData(selectedFile.id, data).catch(error => {
+                      console.error('Failed to save JSON data to IndexedDB:', error)
+                    })
+                  }
+                }}
+                pdfUrl={pdfUrl}
+                highlightedText={highlightedText}
+                highlightedField={highlightedField}
+                pdfTextContent={pdfTextContent}
+                onTextSelect={(selectedText) => {
+                  setHighlightedText(selectedText)
+                }}
+                onFieldClick={highlightTextInPdf}
+                onPageWidthChange={setPanelRightWidth}
+                containerWidth={panelRightWidth}
+                panelRightWidth={panelRightWidth}
+                panelLeftWidth={panelLeftWidth}
+              />
             </div>
           </div>
         </div>
