@@ -38,7 +38,22 @@ function App() {
   const [highlightedText, setHighlightedText] = useState('')
   const [highlightedField, setHighlightedField] = useState(null) // For bbox highlighting
   const [currentPdfFile, setCurrentPdfFile] = useState(null) // Track currently loaded PDF file
+  const [panelRightWidth, setPanelRightWidth] = useState(null) // Track PDF page width for panel sizing
+  const [panelLeftWidth, setPanelLeftWidth] = useState(null) // Track form panel width
   const navigate = useNavigate();
+
+  // Adjust panel widths when form is loaded
+  useEffect(() => {
+    if (jsonData && selectedFile && selectedFile.type === 'application/pdf') {
+      // Form is loaded in panel-left, adjust widths
+      setPanelRightWidth(340);
+      setPanelLeftWidth(610);
+    } else if (!jsonData) {
+      // Reset to default when no form is loaded
+      setPanelRightWidth(null);
+      setPanelLeftWidth(null);
+    }
+  }, [jsonData, selectedFile]);
 
   // Extract text from PDF
   const extractTextFromPdf = async (blob) => {
@@ -136,6 +151,8 @@ function App() {
       setPdfTextContent([])
       setHighlightedText('')
       setSidebarWidth(240)
+      setPanelRightWidth(null) // Reset panel width
+      setPanelLeftWidth(null) // Reset panel width
 
       toast.success('Project data cleared successfully')
     } catch (error) {
@@ -197,6 +214,8 @@ function App() {
     setPdfTextContent([])
     setHighlightedText('')
     setCurrentPdfFile(null) // Reset the current PDF file
+    setPanelRightWidth(null) // Reset panel width
+    setPanelLeftWidth(null) // Reset panel width
   }
 
   useEffect(() => {
@@ -355,6 +374,9 @@ function App() {
       // Load JSON for editing in panel-left, keep PDF in panel-right if open
       loadJsonFile(file)
       // Do not clear pdfUrl/highlightedText/pdfTextContent
+    } else {
+      // Clear panel width for non-PDF files
+      setPanelRightWidth(null)
     }
   }
 
@@ -407,6 +429,8 @@ function App() {
       // If the processed data was being viewed, clear it
       if (jsonData && selectedFile && selectedFile.id === deletedFileId) {
         setJsonData(null)
+        setPanelRightWidth(null) // Reset panel width
+        setPanelLeftWidth(null) // Reset panel width
       }
     }
 
@@ -738,7 +762,7 @@ function App() {
             </div>
             <div className="content">
               <div className="split-panel">
-                <div className="panel-right">
+                <div className="panel-right" style={panelRightWidth ? { width: `${panelRightWidth}px`, flex: 'none' } : {}}>
                   {!selectedFile ? (
                     <div className="empty-panel">
                       <p className="empty-message"></p>
@@ -752,6 +776,8 @@ function App() {
                       onTextSelect={(selectedText) => {
                         setHighlightedText(selectedText)
                       }}
+                      onPageWidthChange={setPanelRightWidth}
+                      containerWidth={panelRightWidth}
                     />
                   ) : selectedFile.type === 'application/json' && pdfUrl ? (
                     <FileViewer 
@@ -762,6 +788,8 @@ function App() {
                       onTextSelect={(selectedText) => {
                         setHighlightedText(selectedText)
                       }}
+                      onPageWidthChange={setPanelRightWidth}
+                      containerWidth={panelRightWidth}
                     />
                   ) : selectedFile.type === 'application/pdf' ? (
                     <div className="empty-panel">
@@ -773,7 +801,7 @@ function App() {
                     </div>
                   )}
                 </div>
-                <div className="panel-left">
+                <div className="panel-left" style={panelLeftWidth ? { width: `${panelLeftWidth}px`, flex: 'none' } : {}}>
                   {!selectedFile ? (
                     <div className="empty-panel">
                       <p className="empty-message">Select a PDF file to view</p>

@@ -5,7 +5,7 @@ import { pdfjs } from 'react-pdf';
 // Set worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent, onTextSelect }) => {
+const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent, onTextSelect, onPageWidthChange, containerWidth }) => {
   const [selectedText, setSelectedText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [numPages, setNumPages] = useState(null);
@@ -18,7 +18,17 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   const [viewports, setViewports] = useState([]);
   const [scales, setScales] = useState([]);
   const [pdfDoc, setPdfDoc] = useState(null);
+  const [zoomLevel, setZoomLevel] = useState(1.0); // Add zoom level state
   const fileViewerRef = useRef(null);
+
+  // Zoom functions
+  const zoomIn = () => {
+    setZoomLevel(prev => Math.min(prev * 1.2, 3.0)); // Max 3x zoom
+  };
+
+  const zoomOut = () => {
+    setZoomLevel(prev => Math.max(prev / 1.2, 0.5)); // Min 0.5x zoom
+  };
 
   // Load PDF and render to canvases
   useEffect(() => {
@@ -62,7 +72,12 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
           const scaleX = containerWidth / pageWidth;
           const scaleY = containerHeight / pageHeight;
           
-          const fitScale = Math.min(fixedHeight / pageHeight, scaleX, 3.0); // Scale to fit fixed height, but don't exceed width or 3x zoom
+          // Prioritize width fitting when container width is constrained (e.g., 340px)
+          // Otherwise use height fitting for normal viewing
+          const isConstrainedWidth = containerWidth <= 400; // Consider widths <= 400px as constrained
+          const fitScale = isConstrainedWidth 
+            ? Math.min(scaleX, fixedHeight / pageHeight, 3.0) * zoomLevel
+            : Math.min(fixedHeight / pageHeight, scaleX, 3.0) * zoomLevel;
 
           // Render at higher resolution for crisp text (2x for better quality)
           const renderScale = Math.max(fitScale * 2, 1.0); // At least 1.0, but higher for small pages
@@ -101,6 +116,12 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         setScales(newScales);
         setNumPages(numPages);
         setIsLoading(false);
+
+        // Report the display width of the first page to parent component
+        if (newScales.length > 0 && onPageWidthChange) {
+          const firstPageWidth = pageWidth * newScales[0];
+          onPageWidthChange(firstPageWidth);
+        }
       } catch (error) {
         console.error('Error loading PDF:', error);
         setIsLoading(false);
@@ -109,7 +130,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
     };
 
     loadPdf();
-  }, [pdfUrl]);
+  }, [pdfUrl, zoomLevel, containerWidth]);
 
   // Highlight helper function
   const highlightBox = (ctx, rect) => {
@@ -413,7 +434,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   };
 
   return (
-    <div className="file-viewer" ref={fileViewerRef}>
+    <div className="file-viewer" ref={fileViewerRef} style={containerWidth ? { width: `${containerWidth}px`, margin: '0 auto' } : {}}>
       {pdfUrl ? (
         <>
           {isLoading && (
@@ -421,8 +442,13 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
               Loading PDF pages...
             </div>
           )}
-          <div className="pdf-container">
+          <div className="pdf-container" style={containerWidth ? { width: `${containerWidth}px`, margin: '0 auto' } : {}}>
             {/* Canvases are dynamically added here */}
+          </div>
+          <div className="zoom-controls">
+            <button onClick={zoomOut} className="zoom-btn" title="Zoom Out">−</button>
+            <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
+            <button onClick={zoomIn} className="zoom-btn" title="Zoom In">+</button>
           </div>
           {totalMatches > 0 && (
             <div className="search-bar">
