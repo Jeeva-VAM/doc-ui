@@ -237,30 +237,47 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                           <>
                             <button
                               className="sidebar-action-btn"
-                              title="Process PDF (Method 1)"
+                              title="Load SAKTHI--S 1_analysis 1.json"
                               style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#ffc017', color: '#000', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 try {
-                                  const pdfBlob = await fileDB.getFile(file.id);
-                                  if (pdfBlob) {
-                                    const formData = new FormData();
-                                    formData.append('file', pdfBlob, file.name);
+                                  toast.loading('Loading analysis data...', { id: 'load1' });
+                                  const response = await fetch('/pdfs/SAKTHI--S 1_analysis 1.json');
+                                  if (response.ok) {
+                                    const jsonData = await response.json();
+                                    // Store in processed data
+                                    const processedDataMap = {};
+                                    processedDataMap[file.id] = jsonData;
                                     
-                                    toast.loading('Processing PDF with MosaicML...', { id: 'process1' });
-                                    const response = await axios.post('/mosaicml', formData, {
-                                      headers: {
-                                      },
-                                        'Content-Type': 'multipart/form-data',
-                                    });
-                                    toast.success('PDF processed successfully with MosaicML!', { id: 'process1' });
-                                    console.log('MosaicML response:', response.data);
+                                    // Update parent component's processed data
+                                    if (window.updateProcessedData) {
+                                      window.updateProcessedData(processedDataMap);
+                                    }
+                                    
+                                    // Save to IndexedDB
+                                    const { fileDB } = await import('../utils/db');
+                                    await fileDB.storeJsonData(file.id, jsonData);
+                                    
+                                    // Create virtual JSON file and select it
+                                    const virtualJsonFile = {
+                                      id: `${file.id}_analysis_1`,
+                                      name: 'SAKTHI--S 1_analysis 1.json',
+                                      type: 'application/json'
+                                    };
+                                    
+                                    // Update selected file in parent
+                                    if (window.selectJsonFile) {
+                                      window.selectJsonFile(virtualJsonFile, jsonData);
+                                    }
+                                    
+                                    toast.success('Analysis data loaded successfully!', { id: 'load1' });
                                   } else {
-                                    toast.error('PDF file not found in database');
+                                    toast.error('Analysis JSON file not found', { id: 'load1' });
                                   }
                                 } catch (error) {
-                                  console.error('Error processing PDF with MosaicML:', error);
-                                  toast.error('Failed to process PDF with MosaicML', { id: 'process1' });
+                                  console.error('Error loading analysis JSON:', error);
+                                  toast.error('Failed to load analysis data', { id: 'load1' });
                                 }
                               }}
                               onMouseOver={e => e.currentTarget.style.background = '#e6a814'}
@@ -268,30 +285,47 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
                             ><ChevronUp size={14} /></button>
                             <button
                               className="sidebar-action-btn"
-                              title="Process PDF (Method 2)"
+                              title="Load SAKTHI--S_final_expanded.json"
                               style={{marginRight: '2px', padding: '2px 6px', fontSize: '0.85rem', borderRadius: '4px', background: '#54b741', color: '#fff', border: 'none', cursor: 'pointer', transition: 'background 0.2s'}}
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 try {
-                                  const pdfBlob = await fileDB.getFile(file.id);
-                                  if (pdfBlob) {
-                                    const formData = new FormData();
-                                    formData.append('file', pdfBlob, file.name);
+                                  toast.loading('Loading expanded analysis data...', { id: 'load2' });
+                                  const response = await fetch('/pdfs/SAKTHI--S_final_expanded.json');
+                                  if (response.ok) {
+                                    const jsonData = await response.json();
+                                    // Store in processed data
+                                    const processedDataMap = {};
+                                    processedDataMap[file.id] = jsonData;
                                     
-                                    toast.loading('Processing PDF with LLM...', { id: 'process2' });
-                                    const response = await axios.post('/llm', formData, {
-                                      headers: {
-                                        'Content-Type': 'multipart/form-data',
-                                      },
-                                    });
-                                    toast.success('PDF processed successfully with LLM!', { id: 'process2' });
-                                    console.log('LLM response:', response.data);
+                                    // Update parent component's processed data
+                                    if (window.updateProcessedData) {
+                                      window.updateProcessedData(processedDataMap);
+                                    }
+                                    
+                                    // Save to IndexedDB
+                                    const { fileDB } = await import('../utils/db');
+                                    await fileDB.storeJsonData(file.id, jsonData);
+                                    
+                                    // Create virtual JSON file and select it
+                                    const virtualJsonFile = {
+                                      id: `${file.id}_final_expanded`,
+                                      name: 'SAKTHI--S_final_expanded.json',
+                                      type: 'application/json'
+                                    };
+                                    
+                                    // Update selected file in parent
+                                    if (window.selectJsonFile) {
+                                      window.selectJsonFile(virtualJsonFile, jsonData);
+                                    }
+                                    
+                                    toast.success('Expanded analysis data loaded successfully!', { id: 'load2' });
                                   } else {
-                                    toast.error('PDF file not found in database');
+                                    toast.error('Expanded analysis JSON file not found', { id: 'load2' });
                                   }
                                 } catch (error) {
-                                  console.error('Error processing PDF with LLM:', error);
-                                  toast.error('Failed to process PDF with LLM', { id: 'process2' });
+                                  console.error('Error loading expanded analysis JSON:', error);
+                                  toast.error('Failed to load expanded analysis data', { id: 'load2' });
                                 }
                               }}
                               onMouseOver={e => e.currentTarget.style.background = '#3d8b31'}

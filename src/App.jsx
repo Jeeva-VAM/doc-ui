@@ -317,6 +317,23 @@ function App() {
     }
   }, [sidebarWidth, currentProject])
 
+  // Expose functions to window for Sidebar component to update state
+  useEffect(() => {
+    window.updateProcessedData = (newProcessedData) => {
+      setProcessedData(prev => ({ ...prev, ...newProcessedData }));
+    };
+    
+    window.selectJsonFile = (virtualFile, jsonData) => {
+      setSelectedFile(virtualFile);
+      setJsonData(jsonData);
+    };
+    
+    return () => {
+      delete window.updateProcessedData;
+      delete window.selectJsonFile;
+    };
+  }, []);
+
   const handleFileSelect = (file) => {
     // Don't reload if the same file is already selected
     if (selectedFile && selectedFile.id === file.id) {
