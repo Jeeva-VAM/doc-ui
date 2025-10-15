@@ -57,12 +57,12 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
           const pageWidth = viewport.width;
           const pageHeight = viewport.height;
 
-          // Calculate scale to fit width and height
+          // Use fixed height of 455px for canvas display
+          const fixedHeight = 455;
           const scaleX = containerWidth / pageWidth;
           const scaleY = containerHeight / pageHeight;
           
-          // Make each page fill the container height, but don't exceed reasonable width
-          const fitScale = Math.min(scaleY, scaleX, 3.0); // Allow up to 3x zoom, prioritize height
+          const fitScale = Math.min(fixedHeight / pageHeight, scaleX, 3.0); // Scale to fit fixed height, but don't exceed width or 3x zoom
 
           // Render at higher resolution for crisp text (2x for better quality)
           const renderScale = Math.max(fitScale * 2, 1.0); // At least 1.0, but higher for small pages
@@ -73,9 +73,9 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
           canvas.height = scaledViewport.height;
           canvas.setAttribute('data-page-number', i.toString());
 
-          // Set CSS dimensions to fit container (scaled down from high-res render)
+          // Set CSS dimensions with fixed height of 455px
           const displayWidth = pageWidth * fitScale;
-          const displayHeight = pageHeight * fitScale;
+          const displayHeight = fixedHeight; // Fixed height of 455px
           canvas.style.width = `${displayWidth}px`;
           canvas.style.height = `${displayHeight}px`;
           canvas.style.display = 'block';
