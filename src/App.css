@@ -647,12 +647,28 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 3px;
-  background-color: #f5f5f5;
-  color: #333;
-  font-size: 13px;
+  gap: 8px;
+  padding: 12px;
+  background-color: #111;
+  color: #fff;
+  font-size: 14px;
   border-radius: 8px;
   margin-bottom: 20px;
+  border: 1px solid #333;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+  color: #0064fa;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .no-file {

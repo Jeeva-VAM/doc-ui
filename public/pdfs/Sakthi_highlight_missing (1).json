@@ -1,0 +1,578 @@
+{
+  "document_info": {
+    "filename": "SAKTHI--S.pdf",
+    "processing_timestamp": "2025-10-15 10:51:35",
+    "processor_version": "1.0",
+    "total_pages": 1
+  },
+  "processing_config": {
+    "detection_method": "enhanced_cv",
+    "confidence_threshold": 0.5,
+    "pattern_mode": "balanced"
+  },
+  "form_fields": [
+    {
+      "field_id": "field_001",
+      "label": "POLICY NUMBER:",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 48.195,
+        "y1": 52.204,
+        "x2": 126.14,
+        "y2": 62.308
+      },
+      "page": 1,
+      "confidence": 0.8,
+      "required": true,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_002",
+      "label": "BUSINESSOWNERS",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 443.87,
+        "y1": 47.152,
+        "x2": 536.095,
+        "y2": 57.25600000000001
+      },
+      "page": 1,
+      "confidence": 0.8,
+      "required": true,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_003",
+      "label": "BP 14 80 07 13",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 469.45500000000004,
+        "y1": 58.940000000000005,
+        "x2": 536.095,
+        "y2": 68.202
+      },
+      "page": 1,
+      "confidence": 0.8,
+      "required": true,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_004",
+      "label": "THIS ENDORSEMENT CHANGES THE POLICY. PLEASE READ IT CAREFULLY.",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 86.27499999999999,
+        "y1": 74.938,
+        "x2": 513.485,
+        "y2": 88.41
+      },
+      "page": 1,
+      "confidence": 0.8,
+      "required": true,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_005",
+      "label": "HIGHER LIMITS",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 245.73499999999999,
+        "y1": 99.356,
+        "x2": 354.62,
+        "y2": 114.51200000000001
+      },
+      "page": 1,
+      "confidence": 0.8,
+      "required": true,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_006",
+      "label": "This endorsement modifies insurance provided under the following:",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 45.815,
+        "y1": 127.984,
+        "x2": 327.845,
+        "y2": 139.77200000000002
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_007",
+      "label": "BUSINESSOWNERS COVERAGE FORM",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 58.905,
+        "y1": 152.402,
+        "x2": 238.59500000000003,
+        "y2": 164.19
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_008",
+      "label": "With respect to each Coverage identified in the Schedule, the amount of insurance provided in this p",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 44.625,
+        "y1": 446.26000000000005,
+        "x2": 271.915,
+        "y2": 532.986
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_009",
+      "label": "Premises Number",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 200.0,
+        "x2": 290.0,
+        "y2": 222.6
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_010",
+      "label": "Building Number",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 200.0,
+        "x2": 534.0,
+        "y2": 222.6
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_011",
+      "label": "Description of Coverage",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 222.6,
+        "x2": 290.0,
+        "y2": 245.2
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_012",
+      "label": "Cell R2C2",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 222.6,
+        "x2": 534.0,
+        "y2": 245.2
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_013",
+      "label": "Revised Amount of Insurance: $",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 245.2,
+        "x2": 290.0,
+        "y2": 267.8
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_014",
+      "label": "Additional Premium: $",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 245.2,
+        "x2": 534.0,
+        "y2": 267.8
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_015",
+      "label": "Premises Number",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 267.8,
+        "x2": 290.0,
+        "y2": 290.4
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_016",
+      "label": "Building Number",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 267.8,
+        "x2": 534.0,
+        "y2": 290.4
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_017",
+      "label": "Description of Coverage",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 290.4,
+        "x2": 290.0,
+        "y2": 313.0
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_018",
+      "label": "Cell R5C2",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 290.4,
+        "x2": 534.0,
+        "y2": 313.0
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_019",
+      "label": "Revised Amount of Insurance: $",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 313.0,
+        "x2": 290.0,
+        "y2": 335.6
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_020",
+      "label": "Additional Premium: $",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 313.0,
+        "x2": 534.0,
+        "y2": 335.6
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_021",
+      "label": "Premises Number",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 335.6,
+        "x2": 290.0,
+        "y2": 358.20000000000005
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_022",
+      "label": "Building Number",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 335.6,
+        "x2": 534.0,
+        "y2": 358.20000000000005
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_023",
+      "label": "Description of Coverage",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 358.20000000000005,
+        "x2": 290.0,
+        "y2": 380.8
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_024",
+      "label": "Cell R8C2",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 358.20000000000005,
+        "x2": 534.0,
+        "y2": 380.8
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    },
+    {
+      "field_id": "field_025",
+      "label": "Revised Amount of Insurance: $",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 380.8,
+        "x2": 290.0,
+        "y2": 403.4
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_026",
+      "label": "Additional Premium: $",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 290.0,
+        "y1": 380.8,
+        "x2": 534.0,
+        "y2": 403.4
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": true
+    },
+    {
+      "field_id": "field_027",
+      "label": "Information require to complete this schedule, if not shown above, will be shown in the declarations.",
+      "text_content": "",
+      "field_type": "text_input",
+      "bbox": {
+        "x1": 46.0,
+        "y1": 403.4,
+        "x2": 290.0,
+        "y2": 426.0
+      },
+      "page": 1,
+      "confidence": 0.75,
+      "required": false,
+      "validation": {
+        "data_type": "text",
+        "max_length": 100
+      },
+      "is_missing": false
+    }
+  ],
+  "tables": [
+    {
+      "table_id": "table_001",
+      "page": 1,
+      "bbox": {
+        "x1": 46,
+        "y1": 200,
+        "x2": 534,
+        "y2": 426
+      },
+      "rows": 10,
+      "columns": 2,
+      "confidence": 0.45
+    }
+  ],
+  "summary": {
+    "total_fields": 27,
+    "total_tables": 1,
+    "high_confidence_fields": 5,
+    "average_confidence": 0.23,
+    "detection_quality": "good",
+    "processing_method": "hybrid_detection"
+  }
+}

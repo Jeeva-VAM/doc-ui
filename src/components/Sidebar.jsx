@@ -22,6 +22,8 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
   const [newFolderName, setNewFolderName] = useState('')
   const [dragOverFolder, setDragOverFolder] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ show: false, type: '', item: null, folderId: null })
+  const [renamingFolder, setRenamingFolder] = useState(null)
+  const [renameFolderName, setRenameFolderName] = useState('')
   const [showDropdown, setShowDropdown] = useState(null) // Changed to store file ID instead of boolean
 
   const createFolder = () => {
@@ -53,6 +55,32 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
       return
     }
     setDeleteModal({ show: true, type: 'file', item: file, folderId })
+  }
+
+  const startRenameFolder = (folder) => {
+    setRenamingFolder(folder.id)
+    setRenameFolderName(folder.name)
+  }
+
+  const cancelRenameFolder = () => {
+    setRenamingFolder(null)
+    setRenameFolderName('')
+  }
+
+  const confirmRenameFolder = () => {
+    if (!renameFolderName.trim()) {
+      toast.error('Folder name cannot be empty')
+      return
+    }
+    
+    const updatedFolders = folders.map(f => 
+      f.id === renamingFolder ? { ...f, name: renameFolderName.trim() } : f
+    )
+    setFolders(updatedFolders)
+    persistFoldersToDB(updatedFolders)
+    setRenamingFolder(null)
+    setRenameFolderName('')
+    toast.success('Folder renamed successfully')
   }
 
   const confirmDelete = async () => {
@@ -231,11 +259,103 @@ const Sidebar = ({ folders, setFolders, selectedFolder, setSelectedFolder, onFil
           <div className="folders-list">
             {folders.map(folder => (
               <div key={folder.id} className="folder">
-                <div className="folder-header" style={{position: 'relative'}} onClick={() => { setFolders(folders.map(f => f.id === folder.id ? { ...f, expanded: !f.expanded } : f)); setSelectedFolder(folder.id) }}>
+                <div className="folder-header" style={{position: 'relative'}} onClick={() => { if (!renamingFolder) { setFolders(folders.map(f => f.id === folder.id ? { ...f, expanded: !f.expanded } : f)); setSelectedFolder(folder.id) } }}>
                   {folder.expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   <FolderIcon size={16} />
-                  <span style={{flex: 1}}>{folder.name}</span>
-                  <button style={{position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)'}} onClick={(e) => { e.stopPropagation(); deleteFolder(folder.id) }}><Trash2 size={16} /></button>
+                  {renamingFolder === folder.id ? (
+                    <input
+                      type="text"
+                      value={renameFolderName}
+                      onChange={(e) => setRenameFolderName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') confirmRenameFolder();
+                        if (e.key === 'Escape') cancelRenameFolder();
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        flex: 1,
+                        background: '#222',
+                        border: '1px solid #555',
+                        color: '#fff',
+                        padding: '2px 4px',
+                        fontSize: '14px',
+                        borderRadius: '3px'
+                      }}
+                      autoFocus
+                    />
+                  ) : (
+                    <span style={{flex: 1}}>{folder.name}</span>
+                  )}
+                  {renamingFolder === folder.id ? (
+                    <>
+                      <button 
+                        style={{position: 'absolute', right: '32px', top: '50%', transform: 'translateY(-50%)', padding: '2px 4px', background: '#28a745', color: '#fff', border: 'none', borderRadius: '3px', cursor: 'pointer'}}
+                        onClick={(e) => { e.stopPropagation(); confirmRenameFolder(); }}
+                        title="Confirm rename"
+                      >
+                        ✓
+                      </button>
+                      <button 
+                        style={{position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', padding: '2px 4px', background: '#dc3545', color: '#fff', border: 'none', borderRadius: '3px', cursor: 'pointer'}}
+                        onClick={(e) => { e.stopPropagation(); cancelRenameFolder(); }}
+                        title="Cancel rename"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        style={{
+                          position: 'absolute', 
+                          right: '40px', 
+                          top: '50%', 
+                          transform: 'translateY(-50%)', 
+                          padding: '4px 6px', 
+                          background: '#2b2b2bff', 
+                          color: '#fff', 
+                          border: 'none', 
+                          borderRadius: '4px', 
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        onClick={(e) => { e.stopPropagation(); startRenameFolder(folder); }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#444444ff'; e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = '#444444ff'; e.currentTarget.style.transform = 'translateY(-50%) scale(1)'; }}
+                        title="Rename folder"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        style={{
+                          position: 'absolute', 
+                          right: '8px', 
+                          top: '50%', 
+                          transform: 'translateY(-50%)',
+                          padding: '4px',
+                          background: 'transparent',
+                          color: '#666',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        onClick={(e) => { e.stopPropagation(); deleteFolder(folder.id) }}
+                        onMouseOver={(e) => { e.currentTarget.style.background = '#dc3545'; e.currentTarget.style.color = '#fff'; }}
+                        onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#666'; }}
+                        title="Delete folder"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </>
+                  )}
                 </div>
                 {folder.expanded && (
                   <div className="files-list">

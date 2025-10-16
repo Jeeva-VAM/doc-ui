@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { pdfjs } from 'react-pdf';
+import { Loader } from 'lucide-react';
 
 // PDF.js worker is configured globally in main.jsx
 
@@ -19,7 +20,8 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   const [pdfDoc, setPdfDoc] = useState(null);
   const [zoomLevel, setZoomLevel] = useState(1.0); // Add zoom level state
   const [loadingPdfUrl, setLoadingPdfUrl] = useState(null); // Track currently loading PDF URL
-  const [currentPage, setCurrentPage] = useState(1); // Track current page for navigation
+  const [isNavigating, setIsNavigating] = useState(false); // Prevent rapid navigation clicks
+  const [currentPage, setCurrentPage] = useState(1); // Current page number
   const fileViewerRef = useRef(null);
 
   // Zoom functions
@@ -36,11 +38,25 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
   };
 
   const goToPrevPage = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
+    if (isLoading || isNavigating || !numPages || currentPage <= 1) return;
+    
+    setIsNavigating(true);
+    const newPage = Math.max(currentPage - 1, 1);
+    setCurrentPage(newPage);
+    
+    // Reset navigation flag after a short delay
+    setTimeout(() => setIsNavigating(false), 300);
   };
 
   const goToNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, numPages || 1));
+    if (isLoading || isNavigating || !numPages || currentPage >= numPages) return;
+    
+    setIsNavigating(true);
+    const newPage = Math.min(currentPage + 1, numPages);
+    setCurrentPage(newPage);
+    
+    // Reset navigation flag after a short delay
+    setTimeout(() => setIsNavigating(false), 300);
   };
 
   // Load PDF and render to canvases
@@ -133,6 +149,7 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         setIsLoading(false);
         setLoadingPdfUrl(null); // Clear loading state
         setCurrentPage(1); // Reset to first page when new PDF loads
+        setIsNavigating(false); // Clear navigation state
 
         // Report the display width of the first page to parent component
         if (newScales.length > 0 && onPageWidthChange && newViewports.length > 0) {
@@ -144,6 +161,8 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         console.error('Error loading PDF:', error);
         setIsLoading(false);
         setLoadingPdfUrl(null); // Clear loading state on error
+        setIsNavigating(false); // Clear navigation state on error
+        setCurrentPage(1); // Reset current page on error
         toast.error('Failed to load PDF');
       }
     };
@@ -503,23 +522,21 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
 
   // Scroll to current page when page changes
   useEffect(() => {
-    if (currentPage > 0 && canvases.length > 0) {
+    if (currentPage > 0 && canvases.length > 0 && !isLoading) {
       const container = fileViewerRef.current?.querySelector('.pdf-container');
-      if (container) {
-        const pageIndex = currentPage - 1;
-        const targetCanvas = canvases[pageIndex];
-        if (targetCanvas) {
-          const canvasRect = targetCanvas.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-          const scrollTop = container.scrollTop + canvasRect.top - containerRect.top;
-          container.scrollTo({
-            top: scrollTop,
-            behavior: 'smooth'
-          });
-        }
+      if (container && canvases[currentPage - 1]) {
+        const targetCanvas = canvases[currentPage - 1];
+        const canvasRect = targetCanvas.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const scrollTop = container.scrollTop + canvasRect.top - containerRect.top;
+        
+        container.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth'
+        });
       }
     }
-  }, [currentPage, canvases]);
+  }, [currentPage, canvases, isLoading]);
 
   return (
     <div className="file-viewer" ref={fileViewerRef} style={containerWidth ? { width: `${containerWidth}px`, margin: '0 auto' } : {}}>
@@ -527,16 +544,17 @@ const FileViewer = ({ pdfUrl, highlightedText, highlightedField, pdfTextContent,
         <>
           {isLoading && (
             <div className="pdf-loading">
-              Loading PDF pages...
+              <Loader className="loading-spinner" size={24} />
+              <span>Loading PDF...</span>
             </div>
           )}
           <div className="pdf-container" style={containerWidth ? { width: `${containerWidth}px`, margin: '0 auto' } : {}}>
             {/* Canvases are dynamically added here */}
           </div>
           <div className="zoom-controls">
-            <button onClick={goToPrevPage} className="zoom-btn" title="Previous Page" disabled={currentPage <= 1}>‹</button>
+            <button onClick={goToPrevPage} className="zoom-btn" title="Previous Page" disabled={currentPage <= 1 || isLoading || isNavigating}>‹</button>
             <span className="page-indicator">{currentPage} / {numPages || 1}</span>
-            <button onClick={goToNextPage} className="zoom-btn" title="Next Page" disabled={currentPage >= (numPages || 1)}>›</button>
+            <button onClick={goToNextPage} className="zoom-btn" title="Next Page" disabled={currentPage >= (numPages || 1) || isLoading || isNavigating}>›</button>
             <div className="zoom-separator"></div>
             <button onClick={zoomOut} className="zoom-btn" title="Zoom Out">−</button>
             <span className="zoom-level">{Math.round(zoomLevel * 100)}%</span>
